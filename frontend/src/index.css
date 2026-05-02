@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+
+
+@theme {
+  /*you can add extra color or font*/
+  --font-poppins: "Poppins", sans-serif;
+}
+
+:root {
+  font-family: "Poppins", sans-serif;
+}
+
