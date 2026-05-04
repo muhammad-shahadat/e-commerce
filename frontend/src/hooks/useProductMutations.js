@@ -12,7 +12,7 @@ export const useCreateProducts = () => {
 
     return useMutation({
         mutationFn: async (formData) => {
-            const res = await api.post("/api/products/create-product", formData);
+            const res = await api.post("/api/products/", formData);
             return res.data.payload;
         },
 

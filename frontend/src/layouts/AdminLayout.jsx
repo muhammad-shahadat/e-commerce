@@ -1,37 +1,30 @@
 import React, { useState } from 'react'
-import DashboardHeader from '../Components/adminDashboard/DashboardHeader';
-import Sidebar from '../Components/adminDashboard/Sidebar';
-import { Outlet } from 'react-router-dom';
+import Header from '../components/admin/Header'
+import Sidebar from '../components/admin/Sidebar'
+import { Outlet } from 'react-router-dom'
 
 const AdminLayout = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      <Sidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
 
-    return (
-        <div className='flex h-screen overflow-hidden bg-gray-50'>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
 
-            <Sidebar
-                isMobileMenuOpen={isMobileMenuOpen}
-                setIsMobileMenuOpen={setIsMobileMenuOpen}
-            />
-
-
-            <div className='flex-1 flex flex-col min-w-0 overflow-hidden'>
-
-
-                <DashboardHeader
-                    isMobileMenuOpen={isMobileMenuOpen}
-                    setIsMobileMenuOpen={setIsMobileMenuOpen}
-                />
-
-
-                <main className='flex-1 overflow-y-auto p-4 md:p-6'>
-                    <Outlet />
-
-                </main>
-            </div>
-        </div>
-    )
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
 }
 
-export default AdminLayout;
+export default AdminLayout

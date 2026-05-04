@@ -1,0 +1,24 @@
+{
+  "name": "old_e-commerce",
+  "version": "1.0.0",
+  "description": "This is a practice project developed while following a YouTube tutorial. It is a modern and responsive frontend UI for an e-commerce application, built using **React**, **Vite**, and **CSS**. The goal of this project was to gain hands-on experience with React fundamentals, component-based architecture, and basic state management using Context API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muhammad-shahadat/e-commerce.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/muhammad-shahadat/e-commerce/issues"
+  },
+  "homepage": "https://github.com/muhammad-shahadat/e-commerce#readme",
+  "devDependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3"
+  }
+}

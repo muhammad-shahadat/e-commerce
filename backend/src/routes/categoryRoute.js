@@ -1,15 +1,13 @@
-import express from 'express';
+import express from 'express'
 
-import { handleGetCategories } from '../controllers/categoryController.js';
+import {
+  handleCreateCategory,
+  handleGetCategories,
+} from '../controllers/categoryController.js'
 
+const router = express.Router()
 
-const router = express.Router();
+router.get('/', handleGetCategories)
+router.post('/', handleCreateCategory)
 
-
-router.get('/',
-    handleGetCategories,
-)
-
-
-
-export default router;
+export default router

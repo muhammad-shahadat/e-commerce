@@ -21,8 +21,7 @@ req.files = {
     ]
 }
 */
-router.post(
-    "/create-product",
+router.post("/",
     imageUpload.fields([
         {name: "mainImage", maxCount: 1},
         {name: "subImages", maxCount: 4},
