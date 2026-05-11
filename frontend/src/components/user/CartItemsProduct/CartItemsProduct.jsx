@@ -1,90 +1,109 @@
-import React, { useContext } from 'react'
-import { ShopContext } from '../../../Context/ShopContext'
+import React from 'react'
+import useCartStore from '../../../stores/useCartStore' // আপনার পাথ অনুযায়ী
 import { Trash2, Plus, Minus } from 'lucide-react'
 
-const CartItemsProduct = (props) => {
-  const { cartItems, removeFromCart, addToCart } = useContext(ShopContext)
-  const quantity = cartItems[props.id]
+const CartItemsProduct = ({ product }) => {
+  // স্টোর থেকে ফাংশনগুলো নিয়ে আসা (deleteFromCart সহ)
+  const { decreaseQuantity, addToCart, removeFromCart } = useCartStore()
 
-  // if no item in the cart
-  if (quantity <= 0) return null
+  const { id, variantId, title, image, newPrice, quantity, variantName } =
+    product
 
   return (
     <div className="w-full">
-      {/* --- Desktop View (Table Row Style) --- */}
-      <div className="hidden md:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_0.5fr] items-center gap-4 py-5 px-4 hover:bg-gray-50 transition-colors rounded-xl">
+      {/* --- Desktop View --- */}
+      <div className="hidden md:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_0.5fr] items-center gap-4 py-6 px-4 hover:bg-gray-50 transition-colors rounded-2xl">
         <img
-          src={props.image}
-          alt={props.title}
-          className="w-20 h-24 object-cover rounded-lg shadow-sm"
+          src={image}
+          alt={title}
+          className="w-20 h-24 object-cover rounded-xl shadow-sm"
         />
 
-        <p className="text-gray-800 font-semibold text-lg truncate pr-4">
-          {props.title}
-        </p>
-
-        <p className="text-gray-600 font-medium">${props.newPrice}</p>
-
-        {/* Quantity Control */}
-        <div className="flex items-center">
-          <span className="w-12 h-10 flex items-center justify-center border border-gray-200 rounded-lg bg-white font-bold text-gray-700">
-            {quantity}
-          </span>
+        <div>
+          <p className="text-gray-800 font-bold text-lg truncate pr-4 capitalize">
+            {title}
+          </p>
+          {variantName && (
+            <p className="text-sm text-gray-500 font-medium mt-1 italic">
+              Variant: {variantName}
+            </p>
+          )}
         </div>
 
-        <p className="text-indigo-600 font-bold text-lg">
-          ${(quantity * props.newPrice).toFixed(2)}
+        <p className="text-gray-600 font-bold">${newPrice.toFixed(2)}</p>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => decreaseQuantity(id, variantId)}
+            className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+          >
+            <Minus size={16} />
+          </button>
+          <span className="w-8 text-center font-black text-gray-800">
+            {quantity}
+          </span>
+          <button
+            onClick={() => addToCart(product)}
+            className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+
+        <p className="text-indigo-600 font-black text-xl">
+          ${(quantity * newPrice).toFixed(2)}
         </p>
 
         <button
-          onClick={() => removeFromCart(props.id)}
-          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all rounded-full w-fit cursor-pointer"
+          onClick={() => removeFromCart(id, variantId)} // ডাইরেক্ট রিমুভ
+          className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-full cursor-pointer"
         >
           <Trash2 size={22} />
         </button>
       </div>
 
-      {/* --- Mobile View (Card Style) --- */}
-      <div className="md:hidden flex gap-4 p-4 bg-white border border-gray-100 rounded-2xl shadow-sm mb-4 relative">
+      {/* --- Mobile View --- */}
+      <div className="md:hidden flex gap-4 p-4 bg-white border border-gray-100 rounded-2xl mb-4 relative shadow-sm">
         <img
-          src={props.image}
-          alt={props.title}
+          src={image}
+          alt={title}
           className="w-24 h-28 object-cover rounded-xl"
         />
-
         <div className="flex flex-col flex-1 justify-between py-1">
           <div>
-            <h3 className="text-gray-800 font-bold text-base line-clamp-1 capitalize">
-              {props.title}
+            <h3 className="text-gray-900 font-bold text-base line-clamp-1">
+              {title}
             </h3>
-            <p className="text-gray-500 text-sm font-medium mt-1">
-              Unit Price: ${props.newPrice}
+            {variantName && (
+              <p className="text-xs text-gray-500 mt-0.5">{variantName}</p>
+            )}
+            <p className="text-gray-500 text-sm font-bold mt-1">
+              ${newPrice.toFixed(2)}
             </p>
           </div>
-
           <div className="flex items-center justify-between">
-            <p className="text-indigo-600 font-bold text-lg">
-              ${(quantity * props.newPrice).toFixed(2)}
-            </p>
-
-            <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-              <span className="text-gray-700 font-bold text-sm">
-                Qty: {quantity}
-              </span>
+            <div className="flex items-center gap-3 bg-gray-50 px-2 py-1 rounded-lg">
+              <button onClick={() => decreaseQuantity(id, variantId)}>
+                <Minus size={14} />
+              </button>
+              <span className="font-bold text-sm">{quantity}</span>
+              <button onClick={() => addToCart(product)}>
+                <Plus size={14} />
+              </button>
             </div>
+            <p className="text-indigo-600 font-black">
+              ${(quantity * newPrice).toFixed(2)}
+            </p>
           </div>
         </div>
-
         <button
-          onClick={() => removeFromCart(props.id)}
-          className="absolute top-3 right-3 p-2 text-red-400 active:scale-90 transition-transform"
+          onClick={() => removeFromCart(id, variantId)}
+          className="absolute top-2 right-2 p-2 text-red-400 active:scale-90"
         >
-          <Trash2 size={20} />
+          <Trash2 size={18} />
         </button>
       </div>
-
-      {/* Divider for Desktop */}
-      <hr className="hidden md:block border-gray-100 my-1" />
+      <hr className="hidden md:block border-gray-50 my-1" />
     </div>
   )
 }

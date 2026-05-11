@@ -1,9 +1,13 @@
-import express from "express";
-import { handleCreateProduct } from "../controllers/productController.js";
-import imageUpload from "../middleware/uploadFile.js";
+import express from 'express'
+import {
+  handleCreateProduct,
+  handleGetProduct,
+  handleGetProducts,
+  handleGetRelatedProducts,
+} from '../controllers/productController.js'
+import imageUpload from '../middleware/uploadFile.js'
 
-
-const router = express.Router();
+const router = express.Router()
 
 /* imageUpload.fields([]) works as follow
 req.files = {
@@ -21,15 +25,36 @@ req.files = {
     ]
 }
 */
-router.post("/",
-    imageUpload.fields([
-        {name: "mainImage", maxCount: 1},
-        {name: "subImages", maxCount: 4},
-    ]),
-    handleCreateProduct
+
+// CREATE product → POST /api/products
+router.post(
+  '/',
+  imageUpload.fields([
+    { name: 'mainImage', maxCount: 1 },
+    { name: 'subImages', maxCount: 4 },
+  ]),
+  handleCreateProduct,
 )
 
+// GET all products → GET /api/products
+router.get('/', handleGetProducts)
 
+// SEARCH products → GET /api/products?search=iphone
+// (no separate route or controller needed)
 
+// GET single product + view count update (fire & forget) → GET /api/products/:slug
+router.get('/:slug', handleGetProduct)
 
-export default router;
+router.get('/related/:categoryId', handleGetRelatedProducts)
+
+// DELETE product → DELETE /api/products/:id
+//router.delete('/:id', handleDeleteProduct)
+
+// UPDATE product (all types) → PATCH /api/products/:id
+// router.patch(
+//   '/:id',
+//   upload.single('productImage'), // optional (if image আসে)
+//   handleUpdateProduct,
+// )
+
+export default router

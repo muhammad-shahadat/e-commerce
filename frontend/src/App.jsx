@@ -13,12 +13,15 @@ import Dashboard from './Pages/admin/Dashboard'
 import AddProduct from './Pages/admin/AddProduct'
 import Orders from './Pages/admin/Orders'
 import CreateCategory from './Pages/admin/CreateCategory'
+import ScrollToTop from './components/shared/ScrollToTop'
+import OrderSuccess from './pages/user/OrderSuccess'
 
 function App() {
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-
+      {/* 🚀 এখানে বসিয়ে দিন, তাহলে পুরো সাইটে আর কোথাও স্ক্রল নিয়ে চিন্তা করতে হবে না */}
+      <ScrollToTop />
       <Routes>
         <Route element={<UserLayout />}>
           <Route path="/" element={<Home />} />
@@ -27,7 +30,9 @@ function App() {
           <Route path="/kids" element={<ShopCategory category="kids" />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/product/:productId" element={<Product />} />
+          <Route path="/product/:slug" element={<Product />} />
+
+          <Route path="/order-success" element={<OrderSuccess />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

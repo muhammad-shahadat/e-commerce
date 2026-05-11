@@ -1,13 +1,15 @@
-import { useContext, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X, ShoppingBag, ShoppingCart } from 'lucide-react'
-
-import { ShopContext } from '../../context/ShopContext'
+import useCartStore from '../../stores/useCartStore' // 🔥 আপনার স্টোর ইমপোর্ট করুন
+import useUIStore from '../../stores/useUIStore'
 
 const Header = () => {
   const [menu, setMenu] = useState('home')
-  const { getTotalCartItems, isMenuOpen, setIsMenuOpen } =
-    useContext(ShopContext)
+
+  // 🔥 Zustand স্টোর থেকে সরাসরি ডাটা নিন
+  const { getTotalCartItems } = useCartStore()
+  const { isMenuOpen, setIsMenuOpen } = useUIStore()
 
   const navLinks = [
     { name: 'home', label: 'Home', path: '/' },

@@ -105,8 +105,8 @@ CREATE TRIGGER set_timestamp_product_images BEFORE UPDATE ON product_images FOR 
 
 -- 9. USER ADDRESSES TABLE
 CREATE TABLE user_addresses (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     address_line1 VARCHAR(255) NOT NULL,
     address_line2 VARCHAR(255),
     city VARCHAR(100) NOT NULL,
@@ -118,28 +118,51 @@ CREATE TABLE user_addresses (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TRIGGER set_timestamp_user_addresses BEFORE UPDATE ON user_addresses FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
 -- 10. ORDERS TABLE
 CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    shipping_address_id UUID REFERENCES user_addresses(id) ON DELETE SET NULL,
+
+    -- কন্টাক্ট ইনফো (লগইন ইউজারের ইমেইল/ফোন এখান থেকেই ডুপ্লিকেট হয়ে আসবে)
+    customer_name VARCHAR(100) NOT NULL,
+    customer_email VARCHAR(100) NOT NULL,
+    customer_phone VARCHAR(20) NOT NULL,
+
+    -- স্ন্যাপশট অ্যাড্রেস (সব সময় ইনসার্ট হবে)
+    shipping_address_line1 VARCHAR(255) NOT NULL,
+    shipping_address_line2 VARCHAR(255),
+    shipping_city VARCHAR(100) NOT NULL,
+    shipping_state VARCHAR(100),
+    shipping_postal_code VARCHAR(20),
+    shipping_country VARCHAR(100) NOT NULL,
+
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'shipped', 'completed', 'cancelled')),
     total DECIMAL(12, 2) NOT NULL,
-    shipping_charge DECIMAL(10, 2) DEFAULT 0.00,
-    shipping_address_id INTEGER REFERENCES user_addresses(id) ON DELETE SET NULL,
+    shipping_charge DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    
     payment_method VARCHAR(20) DEFAULT 'COD' CHECK (payment_method IN ('COD', 'BKASH', 'NAGAD', 'ROCKET', 'CARD')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TRIGGER set_timestamp_orders BEFORE UPDATE ON orders FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
 -- 11. ORDER ITEMS TABLE
 CREATE TABLE order_items (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id INTEGER NOT NULL REFERENCES products(id),
-    product_variant_id INTEGER REFERENCES product_variants(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id),
+    product_variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
     price DECIMAL(12, 2) NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0)
 );
+
+
+
+
 
 -- 12. CARTS & CART ITEMS
 CREATE TABLE carts (
