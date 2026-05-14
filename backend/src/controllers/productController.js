@@ -249,11 +249,20 @@ export const handleGetProducts = async (req, res, next) => {
     let values = []
     let index = 1
 
-    // search
+    // Improved Multi-word Search Logic
     if (search) {
-      whereClauses.push(`p.title ILIKE $${index}`)
-      values.push(`%${search}%`)
-      index++
+      // ইউজার যা সার্চ করেছে তাকে স্পেস দিয়ে ভাগ করে আলাদা শব্দ বের করা
+      const searchWords = search.trim().split(/\s+/)
+
+      const searchTerms = searchWords.map((word) => {
+        values.push(`%${word}%`)
+        const currentIndex = index
+        index++
+        return `p.title ILIKE $${currentIndex}`
+      })
+
+      // টাইটেলের মধ্যে সবগুলো শব্দ থাকতে হবে এমন শর্ত (AND লজিক)
+      whereClauses.push(`(${searchTerms.join(' AND ')})`)
     }
 
     // category filter (RECURSIVE logic)

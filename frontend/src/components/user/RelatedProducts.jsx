@@ -1,16 +1,28 @@
 import React from 'react'
 import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+
 import Item from '../user/Item'
 import { useGetRelatedProducts } from '../../hooks/useProductQueries'
 
 const RelatedProducts = ({ categoryId, currentProductId }) => {
-  const limit = 8
+  const limit = 12
+  const navigate = useNavigate()
 
   const {
     data: relatedProducts,
     isLoading,
     isError,
   } = useGetRelatedProducts(categoryId, currentProductId, limit)
+
+  const categorySlug = relatedProducts?.[0].category_slug
+  const handleSeeMore = () => {
+    if (categorySlug) {
+      navigate(`/shop?category=${categorySlug}`)
+    } else {
+      navigate('/shop') // backup if api fail.
+    }
+  }
 
   if (isLoading) {
     return (
@@ -80,7 +92,10 @@ const RelatedProducts = ({ categoryId, currentProductId }) => {
 
         {/* --- Action Button --- */}
         <div className="mt-4">
-          <button className="text-[#ff4433] font-bold border-b-2 border-[#ff4433] pb-1 hover:text-red-700 hover:border-red-700 transition-all cursor-pointer">
+          <button
+            onClick={handleSeeMore}
+            className="text-[#ff4433] font-bold border-b-2 border-[#ff4433] pb-1 hover:text-red-700 hover:border-red-700 transition-all cursor-pointer"
+          >
             See More Suggestions
           </button>
         </div>

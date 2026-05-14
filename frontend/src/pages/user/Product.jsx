@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 
@@ -16,7 +16,7 @@ const Product = () => {
   if (isLoading)
     return (
       <div className="h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
+        <Loader2 className="animate-spin size={40}" />
       </div>
     )
 

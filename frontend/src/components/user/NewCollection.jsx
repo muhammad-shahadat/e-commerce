@@ -30,8 +30,7 @@ const NewCollection = () => {
   if (isLoading) {
     return (
       <div className="w-full py-20 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-[#ff4433] animate-spin" />
-        <p className="text-gray-500 animate-pulse">Fetching new styles...</p>
+        <Loader2 className="w-10 h-10 animate-spin" />
       </div>
     )
   }
