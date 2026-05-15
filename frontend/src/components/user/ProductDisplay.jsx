@@ -1,9 +1,14 @@
 import React, { useState } from 'react'
 import { HashLink } from 'react-router-hash-link'
 import { Star, ShoppingCart, ShieldCheck, Truck } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+
 import useCartStore from '../../stores/useCartStore' // আপনার পাথ অনুযায়ী দিন
+import { usePlaceOrder } from '../../hooks/useOrderMutations'
+import OrderModal from './OrderModal'
 
 const ProductDisplay = ({ productData }) => {
+  const navigate = useNavigate()
   const { product, images, variants } = productData
 
   // Zustand স্টোর থেকে addToCart নিয়ে আসা
@@ -13,6 +18,12 @@ const ProductDisplay = ({ productData }) => {
     images.find((img) => img.is_main)?.image_url || images[0]?.image_url
   const [displayImage, setDisplayImage] = useState(mainImg)
   const [selectedVariant, setSelectedVariant] = useState(variants[0] || null)
+
+  // UI States -> same as "showCheckout" state
+  const [showOrderModal, setShowOrderModal] = useState(false)
+
+  // --- React Query Mutation Hook ---
+  const { mutate, isPending } = usePlaceOrder()
 
   // প্রাইস ক্যালকুলেশন
   const calculateNewPrice = () => {
@@ -50,6 +61,37 @@ const ProductDisplay = ({ productData }) => {
         .join(' / '),
     }
     addToCart(cartItem)
+  }
+
+  //   for direct single product buying without cart
+  const shippingFee = 0 // later you can dynamic it.
+  const finalTotal = Number(newPrice) + shippingFee
+
+  const handlePlaceOrder = async (formData) => {
+    const orderPayload = {
+      ...formData,
+
+      total: finalTotal, // আপনার DB কলাম: total
+      shipping_charge: shippingFee, // আপনার DB কলাম: shipping_charge
+
+      // প্রোডাক্টের লিস্ট (যা পরে order_items টেবিলে লুপ চালিয়ে ঢুকবে)
+      items: [
+        {
+          product_id: product.id,
+          product_variant_id: selectedVariant?.product_variant_id,
+          price: Number(newPrice),
+          quantity: 1,
+        },
+      ],
+    }
+
+    // Mutation কল করা
+    mutate(orderPayload, {
+      onSuccess: (data) => {
+        navigate('/order-success', { state: { orderData: data } })
+        setShowOrderModal(false) // সফল হলে মোডাল বন্ধ হবে
+      },
+    })
   }
 
   if (!product) return null
@@ -158,16 +200,27 @@ const ProductDisplay = ({ productData }) => {
           )}
 
           {/* Action Button */}
-          <button
-            onClick={handleAddToCart}
-            disabled={selectedVariant?.stock_quantity <= 0}
-            className="w-full md:w-max px-12 py-4 bg-gray-900 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 hover:bg-red-600 transition-all shadow-xl active:scale-95 cursor-pointer mt-4 disabled:bg-gray-400"
-          >
-            <ShoppingCart size={22} />
-            {selectedVariant?.stock_quantity <= 0
-              ? 'OUT OF STOCK'
-              : 'ADD TO CART'}
-          </button>
+          <div className="flex flex-col md:flex-row gap-4 mt-6">
+            <button
+              onClick={handleAddToCart}
+              disabled={selectedVariant?.stock_quantity <= 0}
+              className="flex-1 flex items-center justify-center gap-4 py-3.5 bg-gray-900 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all"
+            >
+              <ShoppingCart size={22} />
+              {selectedVariant?.stock_quantity <= 0
+                ? 'OUT OF STOCK'
+                : 'ADD TO CART'}
+            </button>
+            <button
+              onClick={() => {
+                setShowOrderModal(true)
+              }}
+              disabled={selectedVariant?.stock_quantity <= 0}
+              className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:bg-indigo-700 transition-all"
+            >
+              BUY NOW
+            </button>
+          </div>
 
           {/* Badges */}
           <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
@@ -182,6 +235,14 @@ const ProductDisplay = ({ productData }) => {
           </div>
         </div>
       </div>
+      {/* --- GUEST Order MODAL --- */}
+      <OrderModal
+        isOpenModal={showOrderModal}
+        handleCloseModal={() => setShowOrderModal(false)}
+        finalTotal={finalTotal}
+        handlePlaceOrder={handlePlaceOrder}
+        isPending={isPending}
+      />
     </section>
   )
 }
