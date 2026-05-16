@@ -408,7 +408,7 @@ const AddProduct = () => {
 
               <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">
-                  Gallery Images Max-4
+                  Gallery Images Max-3
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {product.subImages.map((img, i) => (

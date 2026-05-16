@@ -548,3 +548,124 @@ export const handleGetRelatedProducts = async (req, res, next) => {
     next(error)
   }
 }
+
+export const handleDeleteProduct = async (req, res, next) => {
+  const client = await pool.connect()
+
+  try {
+    const { id } = req.params
+
+    // =========================
+    // 1. Validate Input
+    // =========================
+    if (!id) {
+      throw createHttpError(400, 'Product ID is required')
+    }
+
+    // =========================
+    // 2. Check Product Exists
+    // =========================
+    const existingProductResult = await client.query(
+      `
+      SELECT
+        id,
+        title,
+        slug,
+        sku,
+        created_at
+      FROM products
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [id],
+    )
+
+    if (existingProductResult.rows.length === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    const existingProduct = existingProductResult.rows[0]
+
+    // =========================
+    // 3. Check Whether Product Has Any Orders
+    // =========================
+    // If this product appears in any order_items row,
+    // product deletion is blocked.
+    //
+    // This is the safest business rule because:
+    // - Order history must remain intact
+    // - Financial records must remain consistent
+    // - Customer invoices must continue to reference products
+    const orderUsageResult = await client.query(
+      `
+      SELECT
+        COUNT(*)::INTEGER AS total_order_references
+      FROM order_items
+      WHERE product_id = $1
+      `,
+      [id],
+    )
+
+    const totalOrderReferences = orderUsageResult.rows[0].total_order_references
+
+    if (totalOrderReferences > 0) {
+      throw createHttpError(
+        400,
+        'This product cannot be deleted because it is used in existing orders',
+      )
+    }
+
+    // =========================
+    // 4. Begin Transaction
+    // =========================
+    await client.query('BEGIN')
+
+    // =========================
+    // 5. Delete Product
+    // =========================
+    // Related records will be deleted automatically because of:
+    // - product_variants.product_id ON DELETE CASCADE
+    // - product_images.product_id ON DELETE CASCADE
+    // - inventory -> cascades through product_variants
+    // - variant_options -> cascades through product_variants
+    const deleteResult = await client.query(
+      `
+      DELETE FROM products
+      WHERE id = $1
+      RETURNING
+        id,
+        title,
+        slug,
+        sku,
+        created_at
+      `,
+      [id],
+    )
+
+    // Safety check
+    if (deleteResult.rows.length === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    // =========================
+    // 6. Commit Transaction
+    // =========================
+    await client.query('COMMIT')
+
+    // =========================
+    // 7. Success Response
+    // =========================
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Product deleted successfully',
+      payload: {
+        deletedProduct: deleteResult.rows[0],
+      },
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    next(error)
+  } finally {
+    client.release()
+  }
+}

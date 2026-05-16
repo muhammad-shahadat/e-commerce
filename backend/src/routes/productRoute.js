@@ -1,6 +1,7 @@
 import express from 'express'
 import {
   handleCreateProduct,
+  handleDeleteProduct,
   handleGetProduct,
   handleGetProducts,
   handleGetRelatedProducts,
@@ -31,16 +32,15 @@ router.post(
   '/',
   imageUpload.fields([
     { name: 'mainImage', maxCount: 1 },
-    { name: 'subImages', maxCount: 4 },
+    { name: 'subImages', maxCount: 3 },
   ]),
   handleCreateProduct,
 )
 
 // GET all products → GET /api/products
-router.get('/', handleGetProducts)
-
 // SEARCH products → GET /api/products?search=iphone
 // (no separate route or controller needed)
+router.get('/', handleGetProducts)
 
 // GET single product + view count update (fire & forget) → GET /api/products/:slug
 router.get('/:slug', handleGetProduct)
@@ -48,7 +48,7 @@ router.get('/:slug', handleGetProduct)
 router.get('/related/:categoryId', handleGetRelatedProducts)
 
 // DELETE product → DELETE /api/products/:id
-//router.delete('/:id', handleDeleteProduct)
+router.delete('/:id', handleDeleteProduct)
 
 // UPDATE product (all types) → PATCH /api/products/:id
 // router.patch(
