@@ -537,69 +537,62 @@ export const handleUpdateOrder = async (req, res, next) => {
       [status, id],
     )
 
-    // 4. If transitioning to completed, deduct stock and increase sold_count
+    // ৪. If transitioning to completed, deduct stock and increase sold_count
     if (existingOrder.status !== 'completed' && status === 'completed') {
-      // Load order items
+      // ১. অর্ডারের আইটেমগুলো লোড করা হচ্ছে
       const orderItemsResult = await client.query(
         `
-        SELECT
-          oi.product_id,
-          oi.product_variant_id,
-          oi.quantity
+        SELECT oi.product_id, oi.product_variant_id, oi.quantity
         FROM order_items oi
         WHERE oi.order_id = $1
         `,
         [id],
       )
 
-      for (const item of orderItemsResult.rows) {
-        // Ensure stock row exists and sufficient quantity
-        const inventoryResult = await client.query(
+      // ২. লুপের ভেতর কোনো await ছাড়া, সব কুয়েরি একসাথে ফায়ার করার জন্য প্রমিজ অ্যারে বানাচ্ছি
+      const updatePromises = orderItemsResult.rows.map((item) => {
+        return client.query(
           `
-          SELECT quantity
-          FROM inventory
-          WHERE product_variant_id = $1
-          LIMIT 1
-          `,
-          [item.product_variant_id],
-        )
-
-        if (inventoryResult.rows.length === 0) {
-          throw createHttpError(
-            400,
-            `Inventory not found for variant ${item.product_variant_id}`,
-          )
-        }
-
-        const currentQuantity = inventoryResult.rows[0].quantity
-
-        if (currentQuantity < item.quantity) {
-          throw createHttpError(
-            400,
-            'Insufficient stock to complete this order',
-          )
-        }
-
-        // Deduct inventory
-        await client.query(
-          `
-          UPDATE inventory
-          SET quantity = quantity - $1
-          WHERE product_variant_id = $2
-          `,
+            UPDATE inventory
+            SET quantity = quantity - $1
+            WHERE product_variant_id = $2 AND quantity >= $1 -- এখানেই আসল চেক! স্টক কম থাকলে আপডেট হবে না
+            RETURNING product_variant_id, quantity;
+            `,
           [item.quantity, item.product_variant_id],
         )
+      })
 
-        // Increase sold count
-        await client.query(
+      // ৩. Promise.all দিয়ে সব আইটেমের স্টক একসাথে প্যারালালি আপডেট করা হচ্ছে
+      const updateResults = await Promise.all(updatePromises)
+
+      // ৪. আপনার আগের 'if কন্ডিশনগুলোর' আসল রিপ্লেসমেন্ট এখানে:
+      updateResults.forEach((result, index) => {
+        // যদি rowCount === 0 হয়, তার মানে ডাটাবেজে ওই ভেরিয়েন্ট নাই অথবা স্টক কম ছিল, তাই আপডেট হয়নি
+        if (result.rowCount === 0) {
+          const failedItem = orderItemsResult.rows[index]
+
+          // আপনার সেই পরিচিত এরর থ্রো—স্টক না থাকলে বা ইনভেন্টরি না মিললে এটা এক্সিকিউট হবে
+          throw createHttpError(
+            400,
+            `Insufficient stock or inventory missing for variant id ${failedItem.product_variant_id}. Order cannot be completed.`,
+          )
+        }
+      })
+
+      // ৫. স্টক পারফেক্টলি কমলে, এবার সব প্রোডাক্টের sold_count একসাথে বাড়ানোর প্রমিজ অ্যারে
+      const soldCountPromises = orderItemsResult.rows.map((item) => {
+        return client.query(
           `
-          UPDATE products
-          SET sold_count = sold_count + $1
-          WHERE id = $2
-          `,
+            UPDATE products
+            SET sold_count = sold_count + $1
+            WHERE id = $2
+            `,
           [item.quantity, item.product_id],
         )
-      }
+      })
+
+      // ৬. সব sold_count একসাথে প্যারালালি আপডেট হবে
+      await Promise.all(soldCountPromises)
     }
 
     await client.query('COMMIT')

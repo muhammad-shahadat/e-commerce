@@ -1,13 +1,37 @@
-@import "tailwindcss";
-
-
+@import 'tailwindcss';
 
 @theme {
   /*you can add extra color or font*/
-  --font-poppins: "Poppins", sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
 }
 
 :root {
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
+/* ======================================================== */
+/* ADMIN DASHBOARD PRINT & LAYERING RESOLUTIONS */
+/* ======================================================== */
+
+@media print {
+  /* ১. প্রিন্ট কমান্ড চলার সাথে সাথে বডির ভেতরের সব ময়লা-আবর্জনা (সাইডবার, হেডার, মডাল) হাইড */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* ২. শুধুমাত্র আমাদের স্পেশাল ইনভয়েস এরিয়া এবং তার ভেতরের সব এলিমেন্ট দৃশ্যমান হবে */
+  .print-invoice-area,
+  .print-invoice-area * {
+    visibility: visible !important;
+  }
+
+  /* ৩. ইনভয়েসটাকে প্রিন্ট পেজের একদম টপ-লেফট কোণা থেকে শুরু করার জন্য পজিশনিং */
+  .print-invoice-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    color: black !important;
+  }
+}

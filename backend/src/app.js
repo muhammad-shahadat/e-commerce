@@ -8,6 +8,8 @@ import { errorResponse } from './controllers/responseController.js'
 import productRouter from './routes/productRoute.js'
 import categoryRouter from './routes/categoryRoute.js'
 import orderRouter from './routes/orderRoute.js'
+import dashboardRouter from './routes/dashboardRoute.js'
+import inventoryRouter from './routes/inventoryRoute.js'
 
 const app = express()
 
@@ -39,8 +41,13 @@ app.use('/api/categories', categoryRouter)
 //orders route
 app.use('/api/orders', orderRouter)
 
-/** ============Error Handling============ **/
+//dashboard route
+app.use('/api/admin/dashboard', dashboardRouter)
 
+//inventory route
+app.use('/api/admin/inventory', inventoryRouter)
+
+/** ============Error Handling============ **/
 //bad request
 app.use((req, res, next) => {
   next(createHttpError(404, 'bad request! path not found'))
