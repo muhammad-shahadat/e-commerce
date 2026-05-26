@@ -456,7 +456,7 @@ export const handleGetProduct = async (req, res, next) => {
           FROM categories c
           JOIN category_path cp ON c.id = cp.parent_id
         )
-        SELECT name, slug FROM category_path
+        SELECT id, parent_id, name, slug FROM category_path
         `,
         [categoryId],
       ),
@@ -660,6 +660,500 @@ export const handleDeleteProduct = async (req, res, next) => {
       message: 'Product deleted successfully',
       payload: {
         deletedProduct: deleteResult.rows[0],
+      },
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    next(error)
+  } finally {
+    client.release()
+  }
+}
+
+export const handleUpdateProduct = async (req, res, next) => {
+  const client = await pool.connect()
+
+  const { slug: paramSlug } = req.params
+
+  let newlyUploadedImages = []
+  let oldImagesToDelete = []
+
+  try {
+    await client.query('BEGIN')
+
+    // ================================
+    // 1. EXISTING PRODUCT
+    // ================================
+    const existingProductResult = await client.query(
+      `
+      SELECT
+        id,
+        sku,
+        title,
+        slug,
+        category_id,
+        base_price,
+        discount_percent,
+        description,
+        is_active
+      FROM products
+      WHERE slug = $1
+      LIMIT 1
+      `,
+      [paramSlug],
+    )
+
+    if (existingProductResult.rowCount === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    const existingProduct = existingProductResult.rows[0]
+
+    const productId = existingProduct.id
+    const productSku = existingProduct.sku
+
+    // ================================
+    // 2. BODY DATA
+    // ================================
+    const {
+      title,
+      description,
+      base_price,
+      discount_percent,
+      category_id,
+      total_quantity,
+      is_active,
+    } = req.body
+
+    const parsedVariants = req.body.variants
+      ? JSON.parse(req.body.variants)
+      : null
+
+    // ================================
+    // 3. VALIDATION
+    // ================================
+    if (!title || !description || !base_price || !category_id) {
+      throw createHttpError(422, 'Required fields are missing')
+    }
+
+    // category validation
+    const categoryResult = await client.query(
+      `
+      SELECT id
+      FROM categories
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [category_id],
+    )
+
+    if (categoryResult.rowCount === 0) {
+      throw createHttpError(404, 'Category not found')
+    }
+
+    // ================================
+    // 4. UPDATE PRODUCTS TABLE
+    // ONLY UPDATE IF VALUE CHANGED
+    // ================================
+    const finalSlug =
+      title !== existingProduct.title
+        ? generateUniqueSlug(title)
+        : existingProduct.slug
+
+    await client.query(
+      `
+      UPDATE products
+      SET
+        title = $1,
+        slug = $2,
+        description = $3,
+        base_price = $4,
+        discount_percent = $5,
+        category_id = $6,
+        is_active = $7,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $8
+      `,
+      [
+        title,
+        finalSlug,
+        description,
+        Number(base_price),
+        Number(discount_percent) || 0,
+        category_id,
+        is_active === 'false' ? false : true,
+        productId,
+      ],
+    )
+
+    // ==================================================
+    // 5. VARIANTS UPDATE
+    // ONLY TOUCH VARIANTS IF variants EXISTS IN REQUEST
+    // ==================================================
+    if (parsedVariants !== null) {
+      // delete old variants
+      await client.query(
+        `
+        DELETE FROM product_variants
+        WHERE product_id = $1
+        `,
+        [productId],
+      )
+
+      let finalVariants = parsedVariants
+
+      // single product fallback
+      if (finalVariants.length === 0) {
+        finalVariants = [
+          {
+            price_modifier: 0,
+            quantity: total_quantity || 0,
+            options: [],
+          },
+        ]
+      }
+
+      // insert fresh variants
+      for (const variant of finalVariants) {
+        let variantSku = productSku
+
+        if (variant.options?.length > 0) {
+          const optionSuffix = variant.options
+            .map((option) => option.option_value.substring(0, 3).toUpperCase())
+            .join('-')
+
+          variantSku = `${productSku}-${optionSuffix}`
+        }
+
+        const variantResult = await client.query(
+          `
+          INSERT INTO product_variants (
+            product_id,
+            price_modifier,
+            sku
+          )
+          VALUES ($1, $2, $3)
+          RETURNING id
+          `,
+          [productId, Number(variant.price_modifier) || 0, variantSku],
+        )
+
+        const variantId = variantResult.rows[0].id
+
+        // variant options
+        if (variant.options?.length > 0) {
+          for (const option of variant.options) {
+            if (!option.option_value) continue
+
+            await client.query(
+              `
+              INSERT INTO variant_options (
+                product_variant_id,
+                option_name,
+                option_value
+              )
+              VALUES ($1, $2, $3)
+              `,
+              [variantId, option.option_name, option.option_value],
+            )
+          }
+        }
+
+        // inventory
+        await client.query(
+          `
+          INSERT INTO inventory (
+            product_variant_id,
+            quantity
+          )
+          VALUES ($1, $2)
+          `,
+          [variantId, Number(variant.quantity) || 0],
+        )
+      }
+    }
+
+    // ==================================================
+    // 6. IMAGE UPDATE
+    // ONLY TOUCH IMAGES IF NEW FILES PROVIDED
+    // ==================================================
+    const hasMainImage = req.files?.mainImage?.length > 0
+    const hasSubImages = req.files?.subImages?.length > 0
+
+    if (hasMainImage || hasSubImages) {
+      const allFilesToUpload = []
+
+      // main image
+      if (hasMainImage) {
+        allFilesToUpload.push({
+          file: req.files.mainImage[0],
+          isMain: true,
+        })
+      }
+
+      // sub images
+      if (hasSubImages) {
+        req.files.subImages.forEach((file) => {
+          allFilesToUpload.push({
+            file,
+            isMain: false,
+          })
+        })
+      }
+
+      // old image select
+      const oldImagesResult = await client.query(
+        `
+        SELECT public_id, is_main
+        FROM product_images
+        WHERE product_id = $1
+        AND (
+          (is_main = true AND $2 = true)
+          OR
+          (is_main = false AND $3 = true)
+        )
+        `,
+        [productId, hasMainImage, hasSubImages],
+      )
+
+      // save for cloudinary delete
+      oldImagesResult.rows.forEach((img) => {
+        if (img.public_id) {
+          oldImagesToDelete.push(img.public_id)
+        }
+      })
+
+      // delete old DB rows
+      await client.query(
+        `
+        DELETE FROM product_images
+        WHERE product_id = $1
+        AND (
+          (is_main = true AND $2 = true)
+          OR
+          (is_main = false AND $3 = true)
+        )
+        `,
+        [productId, hasMainImage, hasSubImages],
+      )
+
+      // upload new images
+      const uploadResults = await Promise.allSettled(
+        allFilesToUpload.map((item) => cloudinaryFileUpload(item.file)),
+      )
+
+      for (let i = 0; i < uploadResults.length; i++) {
+        const result = uploadResults[i]
+
+        if (result.status === 'rejected') {
+          throw createHttpError(500, 'Image upload failed')
+        }
+
+        const { secure_url, public_id } = result.value
+
+        newlyUploadedImages.push(public_id)
+
+        await client.query(
+          `
+          INSERT INTO product_images (
+            product_id,
+            image_url,
+            public_id,
+            is_main
+          )
+          VALUES ($1, $2, $3, $4)
+          `,
+          [productId, secure_url, public_id, allFilesToUpload[i].isMain],
+        )
+      }
+    }
+
+    // ================================
+    // 7. COMMIT
+    // ================================
+    await client.query('COMMIT')
+
+    // ================================
+    // 8. BACKGROUND CLOUDINARY CLEANUP
+    // ================================
+    if (oldImagesToDelete.length > 0) {
+      Promise.all(
+        oldImagesToDelete.map((publicId) => cloudinaryFileDelete(publicId)),
+      ).catch((err) => {
+        console.error('Cloudinary cleanup failed:', err.message)
+      })
+    }
+
+    // ================================
+    // 9. SUCCESS RESPONSE
+    // ================================
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Product updated successfully',
+      payload: {
+        productId,
+        slug: finalSlug,
+      },
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+
+    // rollback uploaded images
+    if (newlyUploadedImages.length > 0) {
+      await Promise.all(
+        newlyUploadedImages.map((publicId) =>
+          cloudinaryFileDelete(publicId).catch(() => {}),
+        ),
+      )
+    }
+
+    next(error)
+  } finally {
+    client.release()
+  }
+}
+
+// =============================================
+// PRODUCT BASIC INFO UPDATE
+// PATCH /api/products/:slug/basic-info
+// =============================================
+
+export const handleUpdateProductBasicInfo = async (req, res, next) => {
+  const client = await pool.connect()
+
+  try {
+    const { slug: paramSlug } = req.params
+
+    const {
+      title,
+      description,
+      base_price,
+      discount_percent,
+      category_id,
+      is_active,
+    } = req.body
+
+    await client.query('BEGIN')
+
+    // =================================
+    // EXISTING PRODUCT
+    // =================================
+    const existingProductResult = await client.query(
+      `
+      SELECT
+        id,
+        title,
+        slug
+      FROM products
+      WHERE slug = $1
+      LIMIT 1
+      `,
+      [paramSlug],
+    )
+
+    if (existingProductResult.rowCount === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    const existingProduct = existingProductResult.rows[0]
+
+    // =================================
+    // CATEGORY VALIDATION
+    // =================================
+    if (category_id) {
+      const categoryResult = await client.query(
+        `
+        SELECT id
+        FROM categories
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [category_id],
+      )
+
+      if (categoryResult.rowCount === 0) {
+        throw createHttpError(404, 'Category not found')
+      }
+    }
+
+    // =================================
+    // DYNAMIC UPDATE
+    // ONLY CHANGED FIELDS
+    // =================================
+    const fields = []
+    const values = []
+
+    let index = 1
+
+    if (title !== undefined) {
+      fields.push(`title = $${index}`)
+      values.push(title)
+      index++
+
+      const finalSlug =
+        title !== existingProduct.title
+          ? generateUniqueSlug(title)
+          : existingProduct.slug
+
+      fields.push(`slug = $${index}`)
+      values.push(finalSlug)
+      index++
+    }
+
+    if (description !== undefined) {
+      fields.push(`description = $${index}`)
+      values.push(description)
+      index++
+    }
+
+    if (base_price !== undefined) {
+      fields.push(`base_price = $${index}`)
+      values.push(Number(base_price))
+      index++
+    }
+
+    if (discount_percent !== undefined) {
+      fields.push(`discount_percent = $${index}`)
+      values.push(Number(discount_percent))
+      index++
+    }
+
+    if (category_id !== undefined) {
+      fields.push(`category_id = $${index}`)
+      values.push(category_id)
+      index++
+    }
+
+    if (is_active !== undefined) {
+      fields.push(`is_active = $${index}`)
+      values.push(is_active)
+      index++
+    }
+
+    if (fields.length === 0) {
+      throw createHttpError(400, 'No fields provided for update')
+    }
+
+    fields.push(`updated_at = CURRENT_TIMESTAMP`)
+
+    values.push(existingProduct.id)
+
+    const updateQuery = `
+      UPDATE products
+      SET ${fields.join(', ')}
+      WHERE id = $${index}
+      RETURNING *
+    `
+
+    const updatedResult = await client.query(updateQuery, values)
+
+    await client.query('COMMIT')
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Product basic info updated successfully',
+      payload: {
+        product: updatedResult.rows[0],
       },
     })
   } catch (error) {

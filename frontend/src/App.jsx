@@ -15,6 +15,8 @@ import CreateCategory from './Pages/admin/CreateCategory'
 import ScrollToTop from './components/shared/ScrollToTop'
 import OrderSuccess from './pages/user/OrderSuccess'
 import Shop from './pages/user/Shop'
+import ProductList from './pages/admin/ProductList'
+import ProductEditPage from './pages/admin/ProductEditPage'
 
 function App() {
   return (
@@ -38,7 +40,11 @@ function App() {
           {/* ইনডেক্স রাউট মানে হলো শুধু /admin লিখলে এটা দেখাবে */}
           <Route index element={<Dashboard />} />
           <Route path="orders" element={<Orders />} />
-          <Route path="add-product" element={<AddProduct />} />
+          {/* প্রোডাক্ট লিস্ট বা ম্যানেজমেন্ট পেজ */}
+          <Route path="products" element={<ProductList />} />
+
+          <Route path="products/add" element={<AddProduct />} />
+          <Route path="products/edit" element={<ProductEditPage />} />
           <Route path="create-category" element={<CreateCategory />} />
         </Route>
       </Routes>

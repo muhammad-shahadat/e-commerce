@@ -1,11 +1,5 @@
 import React, { useState } from 'react'
 import {
-  useGetDashboardStats,
-  useGetDashboardCharts,
-  useGetLowStockWidget,
-} from '../../hooks/useDashboardQueries'
-
-import {
   DollarSign,
   ShoppingBag,
   Layers,
@@ -30,6 +24,12 @@ import {
   Cell,
   Legend,
 } from 'recharts'
+
+import {
+  useGetDashboardStats,
+  useGetDashboardCharts,
+  useGetLowStockWidget,
+} from '../../hooks/useDashboardQueries'
 
 // পাই চার্টের স্ট্যাটাস কালার কনস্ট্যান্ট
 const STATUS_COLORS = {

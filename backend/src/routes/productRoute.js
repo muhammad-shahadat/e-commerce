@@ -5,6 +5,8 @@ import {
   handleGetProduct,
   handleGetProducts,
   handleGetRelatedProducts,
+  handleUpdateProduct,
+  handleUpdateProductBasicInfo,
 } from '../controllers/productController.js'
 import imageUpload from '../middleware/uploadFile.js'
 
@@ -50,11 +52,16 @@ router.get('/related/:categoryId', handleGetRelatedProducts)
 // DELETE product → DELETE /api/products/:id
 router.delete('/:id', handleDeleteProduct)
 
-// UPDATE product (all types) → PATCH /api/products/:id
-// router.patch(
-//   '/:id',
-//   upload.single('productImage'), // optional (if image আসে)
-//   handleUpdateProduct,
-// )
+// UPDATE product → PUT /api/products/:id
+router.put(
+  '/:id',
+  imageUpload.fields([
+    { name: 'mainImage', maxCount: 1 },
+    { name: 'subImages', maxCount: 3 },
+  ]),
+  handleUpdateProduct,
+)
+
+router.patch('/:slug/basic-info', handleUpdateProductBasicInfo)
 
 export default router
