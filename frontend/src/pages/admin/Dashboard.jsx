@@ -366,7 +366,7 @@ const DashboardOverview = () => {
                       className="w-12 h-12 object-cover rounded-xl border border-gray-100 bg-gray-50"
                     />
                     <div>
-                      <h5 className="text-sm font-semibold text-gray-700 line-clamp-1 max-w-[180px] sm:max-w-xs">
+                      <h5 className="text-sm font-semibold text-gray-700 max-w-[180px] truncate sm:max-w-xs">
                         {product.title}
                       </h5>
                       <p className="text-xs text-gray-400 font-mono mt-0.5">
@@ -374,8 +374,8 @@ const DashboardOverview = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600">
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 whitespace-nowrap">
                       {product.sold_count} Sold
                     </span>
                   </div>

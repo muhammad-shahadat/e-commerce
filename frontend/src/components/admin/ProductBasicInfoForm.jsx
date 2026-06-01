@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Tag, ChevronDown, Loader2, Save } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+
 import useGetCategories from '../../hooks/useCategoryQueries'
 import { useUpdateProductBasicInfo } from '../../hooks/useProductMutations'
 
 const ProductBasicInfoForm = ({ product, categoryTree = [] }) => {
+  const [searchParams, setSearchParams] = useSearchParams() // ইউআরএল হ্যান্ডেল করার জন্য
   // অল ক্যাটাগরি লিস্ট ফেচ
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useGetCategories()
@@ -86,10 +89,28 @@ const ProductBasicInfoForm = ({ product, categoryTree = [] }) => {
     }
 
     // মিউটেশন ট্রিগার
-    updateBasicInfo({
-      slug: product.slug,
-      updateData,
-    })
+    updateBasicInfo(
+      {
+        slug: product.slug,
+        updateData,
+      },
+      {
+        // প্রোডাকশন ট্রিক: মিউটেশন সাকসেস হলে এই callback এক্সিকিউট হবে
+        onSuccess: (updatedProductData) => {
+          // যদি টাইটেল চেঞ্জ হওয়ার কারণে ব্যাকএন্ড নতুন স্লাগ জেনারেট করে থাকে
+          if (
+            updatedProductData.product &&
+            updatedProductData.product.slug !== product.slug
+          ) {
+            const newParams = new URLSearchParams(searchParams)
+            newParams.set('slug', updatedProductData.product.slug) // ইউআরএলে নতুন স্লাগ সেট করলাম
+
+            // ব্রাউজারের হিস্ট্রি নষ্ট না করে ইউআরএল আপডেট (replace: true)
+            setSearchParams(newParams, { replace: true })
+          }
+        },
+      },
+    )
   }
 
   return (
@@ -186,7 +207,7 @@ const ProductBasicInfoForm = ({ product, categoryTree = [] }) => {
               className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none appearance-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium cursor-pointer"
             >
               {isCategoriesLoading ? (
-                <option>Loading core taxonomies...</option>
+                <option>Fetching categories...</option>
               ) : (
                 <>
                   <option value="">Select Main Category</option>

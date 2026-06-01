@@ -401,7 +401,7 @@ export const handleGetProduct = async (req, res, next) => {
       // ✅ images
       pool.query(
         `
-        SELECT image_url, is_main
+        SELECT id, public_id, image_url, is_main
         FROM product_images
         WHERE product_id = $1
         ORDER BY is_main DESC
@@ -549,470 +549,6 @@ export const handleGetRelatedProducts = async (req, res, next) => {
   }
 }
 
-export const handleDeleteProduct = async (req, res, next) => {
-  const client = await pool.connect()
-
-  try {
-    const { id } = req.params
-
-    // =========================
-    // 1. Validate Input
-    // =========================
-    if (!id) {
-      throw createHttpError(400, 'Product ID is required')
-    }
-
-    // =========================
-    // 2. Check Product Exists
-    // =========================
-    const existingProductResult = await client.query(
-      `
-      SELECT
-        id,
-        title,
-        slug,
-        sku,
-        created_at
-      FROM products
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [id],
-    )
-
-    if (existingProductResult.rows.length === 0) {
-      throw createHttpError(404, 'Product not found')
-    }
-
-    const existingProduct = existingProductResult.rows[0]
-
-    // =========================
-    // 3. Check Whether Product Has Any Orders
-    // =========================
-    // If this product appears in any order_items row,
-    // product deletion is blocked.
-    //
-    // This is the safest business rule because:
-    // - Order history must remain intact
-    // - Financial records must remain consistent
-    // - Customer invoices must continue to reference products
-    const orderUsageResult = await client.query(
-      `
-      SELECT
-        COUNT(*)::INTEGER AS total_order_references
-      FROM order_items
-      WHERE product_id = $1
-      `,
-      [id],
-    )
-
-    const totalOrderReferences = orderUsageResult.rows[0].total_order_references
-
-    if (totalOrderReferences > 0) {
-      throw createHttpError(
-        400,
-        'This product cannot be deleted because it is used in existing orders',
-      )
-    }
-
-    // =========================
-    // 4. Begin Transaction
-    // =========================
-    await client.query('BEGIN')
-
-    // =========================
-    // 5. Delete Product
-    // =========================
-    // Related records will be deleted automatically because of:
-    // - product_variants.product_id ON DELETE CASCADE
-    // - product_images.product_id ON DELETE CASCADE
-    // - inventory -> cascades through product_variants
-    // - variant_options -> cascades through product_variants
-    const deleteResult = await client.query(
-      `
-      DELETE FROM products
-      WHERE id = $1
-      RETURNING
-        id,
-        title,
-        slug,
-        sku,
-        created_at
-      `,
-      [id],
-    )
-
-    // Safety check
-    if (deleteResult.rows.length === 0) {
-      throw createHttpError(404, 'Product not found')
-    }
-
-    // =========================
-    // 6. Commit Transaction
-    // =========================
-    await client.query('COMMIT')
-
-    // =========================
-    // 7. Success Response
-    // =========================
-    return successResponse(res, {
-      statusCode: 200,
-      message: 'Product deleted successfully',
-      payload: {
-        deletedProduct: deleteResult.rows[0],
-      },
-    })
-  } catch (error) {
-    await client.query('ROLLBACK')
-    next(error)
-  } finally {
-    client.release()
-  }
-}
-
-export const handleUpdateProduct = async (req, res, next) => {
-  const client = await pool.connect()
-
-  const { slug: paramSlug } = req.params
-
-  let newlyUploadedImages = []
-  let oldImagesToDelete = []
-
-  try {
-    await client.query('BEGIN')
-
-    // ================================
-    // 1. EXISTING PRODUCT
-    // ================================
-    const existingProductResult = await client.query(
-      `
-      SELECT
-        id,
-        sku,
-        title,
-        slug,
-        category_id,
-        base_price,
-        discount_percent,
-        description,
-        is_active
-      FROM products
-      WHERE slug = $1
-      LIMIT 1
-      `,
-      [paramSlug],
-    )
-
-    if (existingProductResult.rowCount === 0) {
-      throw createHttpError(404, 'Product not found')
-    }
-
-    const existingProduct = existingProductResult.rows[0]
-
-    const productId = existingProduct.id
-    const productSku = existingProduct.sku
-
-    // ================================
-    // 2. BODY DATA
-    // ================================
-    const {
-      title,
-      description,
-      base_price,
-      discount_percent,
-      category_id,
-      total_quantity,
-      is_active,
-    } = req.body
-
-    const parsedVariants = req.body.variants
-      ? JSON.parse(req.body.variants)
-      : null
-
-    // ================================
-    // 3. VALIDATION
-    // ================================
-    if (!title || !description || !base_price || !category_id) {
-      throw createHttpError(422, 'Required fields are missing')
-    }
-
-    // category validation
-    const categoryResult = await client.query(
-      `
-      SELECT id
-      FROM categories
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [category_id],
-    )
-
-    if (categoryResult.rowCount === 0) {
-      throw createHttpError(404, 'Category not found')
-    }
-
-    // ================================
-    // 4. UPDATE PRODUCTS TABLE
-    // ONLY UPDATE IF VALUE CHANGED
-    // ================================
-    const finalSlug =
-      title !== existingProduct.title
-        ? generateUniqueSlug(title)
-        : existingProduct.slug
-
-    await client.query(
-      `
-      UPDATE products
-      SET
-        title = $1,
-        slug = $2,
-        description = $3,
-        base_price = $4,
-        discount_percent = $5,
-        category_id = $6,
-        is_active = $7,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $8
-      `,
-      [
-        title,
-        finalSlug,
-        description,
-        Number(base_price),
-        Number(discount_percent) || 0,
-        category_id,
-        is_active === 'false' ? false : true,
-        productId,
-      ],
-    )
-
-    // ==================================================
-    // 5. VARIANTS UPDATE
-    // ONLY TOUCH VARIANTS IF variants EXISTS IN REQUEST
-    // ==================================================
-    if (parsedVariants !== null) {
-      // delete old variants
-      await client.query(
-        `
-        DELETE FROM product_variants
-        WHERE product_id = $1
-        `,
-        [productId],
-      )
-
-      let finalVariants = parsedVariants
-
-      // single product fallback
-      if (finalVariants.length === 0) {
-        finalVariants = [
-          {
-            price_modifier: 0,
-            quantity: total_quantity || 0,
-            options: [],
-          },
-        ]
-      }
-
-      // insert fresh variants
-      for (const variant of finalVariants) {
-        let variantSku = productSku
-
-        if (variant.options?.length > 0) {
-          const optionSuffix = variant.options
-            .map((option) => option.option_value.substring(0, 3).toUpperCase())
-            .join('-')
-
-          variantSku = `${productSku}-${optionSuffix}`
-        }
-
-        const variantResult = await client.query(
-          `
-          INSERT INTO product_variants (
-            product_id,
-            price_modifier,
-            sku
-          )
-          VALUES ($1, $2, $3)
-          RETURNING id
-          `,
-          [productId, Number(variant.price_modifier) || 0, variantSku],
-        )
-
-        const variantId = variantResult.rows[0].id
-
-        // variant options
-        if (variant.options?.length > 0) {
-          for (const option of variant.options) {
-            if (!option.option_value) continue
-
-            await client.query(
-              `
-              INSERT INTO variant_options (
-                product_variant_id,
-                option_name,
-                option_value
-              )
-              VALUES ($1, $2, $3)
-              `,
-              [variantId, option.option_name, option.option_value],
-            )
-          }
-        }
-
-        // inventory
-        await client.query(
-          `
-          INSERT INTO inventory (
-            product_variant_id,
-            quantity
-          )
-          VALUES ($1, $2)
-          `,
-          [variantId, Number(variant.quantity) || 0],
-        )
-      }
-    }
-
-    // ==================================================
-    // 6. IMAGE UPDATE
-    // ONLY TOUCH IMAGES IF NEW FILES PROVIDED
-    // ==================================================
-    const hasMainImage = req.files?.mainImage?.length > 0
-    const hasSubImages = req.files?.subImages?.length > 0
-
-    if (hasMainImage || hasSubImages) {
-      const allFilesToUpload = []
-
-      // main image
-      if (hasMainImage) {
-        allFilesToUpload.push({
-          file: req.files.mainImage[0],
-          isMain: true,
-        })
-      }
-
-      // sub images
-      if (hasSubImages) {
-        req.files.subImages.forEach((file) => {
-          allFilesToUpload.push({
-            file,
-            isMain: false,
-          })
-        })
-      }
-
-      // old image select
-      const oldImagesResult = await client.query(
-        `
-        SELECT public_id, is_main
-        FROM product_images
-        WHERE product_id = $1
-        AND (
-          (is_main = true AND $2 = true)
-          OR
-          (is_main = false AND $3 = true)
-        )
-        `,
-        [productId, hasMainImage, hasSubImages],
-      )
-
-      // save for cloudinary delete
-      oldImagesResult.rows.forEach((img) => {
-        if (img.public_id) {
-          oldImagesToDelete.push(img.public_id)
-        }
-      })
-
-      // delete old DB rows
-      await client.query(
-        `
-        DELETE FROM product_images
-        WHERE product_id = $1
-        AND (
-          (is_main = true AND $2 = true)
-          OR
-          (is_main = false AND $3 = true)
-        )
-        `,
-        [productId, hasMainImage, hasSubImages],
-      )
-
-      // upload new images
-      const uploadResults = await Promise.allSettled(
-        allFilesToUpload.map((item) => cloudinaryFileUpload(item.file)),
-      )
-
-      for (let i = 0; i < uploadResults.length; i++) {
-        const result = uploadResults[i]
-
-        if (result.status === 'rejected') {
-          throw createHttpError(500, 'Image upload failed')
-        }
-
-        const { secure_url, public_id } = result.value
-
-        newlyUploadedImages.push(public_id)
-
-        await client.query(
-          `
-          INSERT INTO product_images (
-            product_id,
-            image_url,
-            public_id,
-            is_main
-          )
-          VALUES ($1, $2, $3, $4)
-          `,
-          [productId, secure_url, public_id, allFilesToUpload[i].isMain],
-        )
-      }
-    }
-
-    // ================================
-    // 7. COMMIT
-    // ================================
-    await client.query('COMMIT')
-
-    // ================================
-    // 8. BACKGROUND CLOUDINARY CLEANUP
-    // ================================
-    if (oldImagesToDelete.length > 0) {
-      Promise.all(
-        oldImagesToDelete.map((publicId) => cloudinaryFileDelete(publicId)),
-      ).catch((err) => {
-        console.error('Cloudinary cleanup failed:', err.message)
-      })
-    }
-
-    // ================================
-    // 9. SUCCESS RESPONSE
-    // ================================
-    return successResponse(res, {
-      statusCode: 200,
-      message: 'Product updated successfully',
-      payload: {
-        productId,
-        slug: finalSlug,
-      },
-    })
-  } catch (error) {
-    await client.query('ROLLBACK')
-
-    // rollback uploaded images
-    if (newlyUploadedImages.length > 0) {
-      await Promise.all(
-        newlyUploadedImages.map((publicId) =>
-          cloudinaryFileDelete(publicId).catch(() => {}),
-        ),
-      )
-    }
-
-    next(error)
-  } finally {
-    client.release()
-  }
-}
-
 // =============================================
 // PRODUCT BASIC INFO UPDATE
 // PATCH /api/products/:slug/basic-info
@@ -1154,6 +690,589 @@ export const handleUpdateProductBasicInfo = async (req, res, next) => {
       message: 'Product basic info updated successfully',
       payload: {
         product: updatedResult.rows[0],
+      },
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    next(error)
+  } finally {
+    client.release()
+  }
+}
+
+// =============================================
+// PRODUCT IMAGE UPDATE
+// PATCH /api/products/:slug/images
+// =============================================
+
+export const handleUpdateProductImages = async (req, res, next) => {
+  const client = await pool.connect()
+
+  let newlyUploadedImages = []
+  let oldImagesToDelete = []
+
+  try {
+    const { slug } = req.params
+
+    // ফ্রন্টএন্ড থেকে পাঠানো ডিলিট করার পাবলিক আইডিগুলো পার্স করা
+    let deletedSubPublicIds = []
+    if (req.body.deletedSubPublicIds) {
+      try {
+        deletedSubPublicIds = JSON.parse(req.body.deletedSubPublicIds)
+      } catch (e) {
+        deletedSubPublicIds = []
+      }
+    }
+
+    const hasMainImage = req.files?.mainImage?.length > 0
+    const hasSubImages = req.files?.subImages?.length > 0
+
+    // গার্ডিং কন্ডিশন: কোনো চেঞ্জ না থাকলে রিকোয়েস্ট আটকে দেওয়া
+    if (!hasMainImage && !hasSubImages && deletedSubPublicIds.length === 0) {
+      throw createHttpError(400, 'No image changes or deletions detected.')
+    }
+
+    await client.query('BEGIN')
+
+    // =================================
+    // PRODUCT CHECK
+    // =================================
+    const productResult = await client.query(
+      `
+      SELECT id
+      FROM products
+      WHERE slug = $1
+      LIMIT 1
+      `,
+      [slug],
+    )
+
+    if (productResult.rowCount === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    const productId = productResult.rows[0].id
+
+    // =================================
+    // DELETE OLD MAIN IMAGE (If changed)
+    // =================================
+    if (hasMainImage) {
+      const oldMainResult = await client.query(
+        `
+        SELECT public_id
+        FROM product_images
+        WHERE product_id = $1
+        AND is_main = true
+        `,
+        [productId],
+      )
+
+      oldMainResult.rows.forEach((img) => {
+        if (img.public_id) {
+          oldImagesToDelete.push(img.public_id)
+        }
+      })
+
+      await client.query(
+        `
+        DELETE FROM product_images
+        WHERE product_id = $1
+        AND is_main = true
+        `,
+        [productId],
+      )
+    }
+
+    // =================================
+    // DELETE SPECIFIC OLD SUB IMAGES (Only deleted ones)
+    // =================================
+    if (deletedSubPublicIds.length > 0) {
+      const oldSubResult = await client.query(
+        `
+        SELECT public_id
+        FROM product_images
+        WHERE product_id = $1
+        AND is_main = false
+        AND public_id = ANY($2::text[])
+        `,
+        [productId, deletedSubPublicIds],
+      )
+
+      oldSubResult.rows.forEach((img) => {
+        if (img.public_id) {
+          oldImagesToDelete.push(img.public_id)
+        }
+      })
+
+      await client.query(
+        `
+        DELETE FROM product_images
+        WHERE product_id = $1
+        AND is_main = false
+        AND public_id = ANY($2::text[])
+        `,
+        [productId, deletedSubPublicIds],
+      )
+    }
+
+    // =================================
+    // MAIN IMAGE UPLOAD
+    // =================================
+    if (hasMainImage) {
+      const uploaded = await cloudinaryFileUpload(req.files.mainImage[0])
+      newlyUploadedImages.push(uploaded.public_id)
+
+      await client.query(
+        `
+        INSERT INTO product_images (
+          product_id,
+          image_url,
+          public_id,
+          is_main
+        )
+        VALUES ($1, $2, $3, true)
+        `,
+        [productId, uploaded.secure_url, uploaded.public_id],
+      )
+    }
+
+    // =================================
+    // NEW SUB IMAGES UPLOAD
+    // =================================
+    if (hasSubImages) {
+      for (const file of req.files.subImages) {
+        const uploaded = await cloudinaryFileUpload(file)
+        newlyUploadedImages.push(uploaded.public_id)
+
+        await client.query(
+          `
+          INSERT INTO product_images (
+            product_id,
+            image_url,
+            public_id,
+            is_main
+          )
+          VALUES ($1, $2, $3, false)
+          `,
+          [productId, uploaded.secure_url, uploaded.public_id],
+        )
+      }
+    }
+
+    await client.query('COMMIT')
+
+    // Background Cleanup (Cloudinary)
+    if (oldImagesToDelete.length > 0) {
+      Promise.all(
+        oldImagesToDelete.map((publicId) => cloudinaryFileDelete(publicId)),
+      ).catch(() => {})
+    }
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Images updated successfully',
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+
+    // Rollback uploaded files if DB query fails
+    if (newlyUploadedImages.length > 0) {
+      await Promise.all(
+        newlyUploadedImages.map((publicId) =>
+          cloudinaryFileDelete(publicId).catch(() => {}),
+        ),
+      )
+    }
+
+    next(error)
+  } finally {
+    client.release()
+  }
+}
+
+// =============================================
+// VARIANT SYNC (PRODUCTION LEVEL)
+// PATCH /api/products/:slug/variants
+// =============================================
+
+export const handleSyncProductVariants = async (req, res, next) => {
+  const client = await pool.connect()
+  try {
+    const { slug } = req.params
+    // 💡 বডি থেকে এখন variants এর পাশাপাশি total_quantity ও রিসিভ করছি
+    const { variants, total_quantity } = req.body
+
+    if (!Array.isArray(variants)) {
+      throw createHttpError(400, 'variants must be an array')
+    }
+
+    await client.query('BEGIN')
+
+    // ১. প্রোডাক্টের মূল তথ্য (id, sku) তুলে আনা
+    const productResult = await client.query(
+      `SELECT id, sku FROM products WHERE slug = $1 LIMIT 1`,
+      [slug],
+    )
+    if (productResult.rowCount === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    const product = productResult.rows[0]
+
+    // ২. ডাটাবেজে বর্তমানে থাকা এই প্রোডাক্টের সব ভ্যারিয়েন্ট আইডি বের করা
+    const currentVariantsResult = await client.query(
+      `SELECT id FROM product_variants WHERE product_id = $1`,
+      [product.id],
+    )
+    const dbVariantIds = currentVariantsResult.rows.map((row) => row.id)
+
+    // ============================================================
+    // 💡 ৩. আর্কিটেকচারাল গার্ড: ইউজার যদি সিঙ্গেল প্রোডাক্ট বানাতে চায় (variants.length === 0)
+    // ============================================================
+    let finalVariants = variants
+
+    if (finalVariants.length === 0) {
+      // ৩.১ কোয়ান্টিটি চেক ভ্যালিডেশন
+      if (
+        total_quantity === undefined ||
+        total_quantity === null ||
+        total_quantity === ''
+      ) {
+        throw createHttpError(
+          422,
+          'Enter product quantity to convert into a single-item product.',
+        )
+      }
+
+      // ৩.২ অর্ডার গার্ড চেক: এক্সিস্টিং ভ্যারিয়েন্টগুলোর সাথে কোনো অর্ডার আছে কিনা
+      if (dbVariantIds.length > 0) {
+        const orderCheckResult = await client.query(
+          `SELECT DISTINCT product_variant_id FROM order_items WHERE product_variant_id = ANY($1::uuid[])`,
+          [dbVariantIds],
+        )
+
+        if (orderCheckResult.rowCount > 0) {
+          throw createHttpError(
+            409,
+            'Cannot convert to single product because current variants are tied to customer orders.',
+          )
+        }
+
+        // ৩.৩ কোনো অর্ডার না থাকলে পুরানো সব ভ্যারিয়েন্ট একবারে ডিলিট করে ক্লিন করো
+        await client.query(
+          `DELETE FROM product_variants WHERE product_id = $1`,
+          [product.id],
+        )
+      }
+
+      // ৩.৪ ব্যাকগ্রাউন্ডে ইনসার্ট করার জন্য ডিফল্ট সিঙ্গেল ভ্যারিয়েন্ট স্ট্রাকচার তৈরি
+      finalVariants = [
+        {
+          product_variant_id: null,
+          price_modifier: 0,
+          quantity: Number(total_quantity) || 0,
+          options: [], // সিঙ্গেল প্রোডাক্টের কোনো কালার/সাইজ অপশন থাকবে না
+        },
+      ]
+    }
+
+    // ৪. ফ্রন্টএন্ড থেকে আসা এক্সিস্টিং আইডি ফিল্টার করা (যখন variants.length > 0 থাকে)
+    const incomingVariantIds = finalVariants
+      .map((v) => v.product_variant_id)
+      .filter((id) => id != null)
+
+    // ৫. যে আইডিগুলো ডাটাবেজে আছে কিন্তু ইনকামিং লিস্টে নাই, সেগুলো ইউজার সিঙ্গেল ডিলিট করেছে
+    const idsToDelete = dbVariantIds.filter(
+      (id) => !incomingVariantIds.includes(id),
+    )
+
+    // ৬. পার্টশিয়াল ডিলিট এবং অর্ডার গার্ড চেক
+    if (idsToDelete.length > 0) {
+      const orderCheckResult = await client.query(
+        `SELECT DISTINCT product_variant_id FROM order_items WHERE product_variant_id = ANY($1::uuid[])`,
+        [idsToDelete],
+      )
+
+      if (orderCheckResult.rowCount > 0) {
+        throw createHttpError(
+          409,
+          'Cannot delete variant(s) because they are associated with existing customer orders.',
+        )
+      }
+
+      await client.query(
+        `DELETE FROM product_variants WHERE id = ANY($1::uuid[])`,
+        [idsToDelete],
+      )
+    }
+
+    // ৭. লুপ চালিয়ে ডাইনামিক INSERT অথবা UPDATE (UPSERT) করা
+    for (const variant of finalVariants) {
+      const variantId = variant.product_variant_id
+
+      // SKU জেনারেশন লজিক
+      let variantSku = product.sku
+      if (variant.options && variant.options.length > 0) {
+        const suffix = variant.options
+          .map((op) => op.option_value.substring(0, 3).toUpperCase())
+          .join('-')
+        variantSku = `${product.sku}-${suffix}`
+      }
+
+      let currentVariantId = variantId
+
+      if (variantId) {
+        // --- ক) এক্সিস্টিং ভ্যারিয়েন্ট আপডেট লজিক ---
+        await client.query(
+          `UPDATE product_variants
+           SET price_modifier = $1, sku = $2, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3 AND product_id = $4`,
+          [
+            Number(variant.price_modifier) || 0,
+            variantSku,
+            variantId,
+            product.id,
+          ],
+        )
+
+        // অপশন টেবিল রিসেট ও নতুন করে ইনসার্ট
+        await client.query(
+          `DELETE FROM variant_options WHERE product_variant_id = $1`,
+          [variantId],
+        )
+
+        if (variant.options && variant.options.length > 0) {
+          for (const option of variant.options) {
+            if (option.option_value) {
+              await client.query(
+                `INSERT INTO variant_options (product_variant_id, option_name, option_value) 
+                 VALUES ($1, $2, $3)`,
+                [variantId, option.option_name, option.option_value],
+              )
+            }
+          }
+        }
+
+        // ইনভেন্টরি স্টক আপডেট
+        await client.query(
+          `UPDATE inventory
+           SET quantity = $1, updated_at = CURRENT_TIMESTAMP
+           WHERE product_variant_id = $2`,
+          [Number(variant.quantity) || 0, variantId],
+        )
+      } else {
+        // --- খ) একদম নতুন বা ডিফল্ট সিঙ্গেল ভ্যারিয়েন্ট ইনসার্ট লজিক ---
+        const variantResult = await client.query(
+          `INSERT INTO product_variants (product_id, price_modifier, sku)
+           VALUES ($1, $2, $3)
+           RETURNING id`,
+          [product.id, Number(variant.price_modifier) || 0, variantSku],
+        )
+
+        currentVariantId = variantResult.rows[0].id
+
+        // অপশনস ইনসার্ট (যদি থাকে)
+        if (variant.options && variant.options.length > 0) {
+          for (const option of variant.options) {
+            if (option.option_value) {
+              await client.query(
+                `INSERT INTO variant_options (product_variant_id, option_name, option_value) 
+                 VALUES ($1, $2, $3)`,
+                [currentVariantId, option.option_name, option.option_value],
+              )
+            }
+          }
+        }
+
+        // ইনভেন্টরি স্টক ইনসার্ট
+        await client.query(
+          `INSERT INTO inventory (product_variant_id, quantity) VALUES ($1, $2)`,
+          [currentVariantId, Number(variant.quantity) || 0],
+        )
+      }
+    }
+
+    await client.query('COMMIT')
+
+    // রেসপন্স মেসেজ ডাইনামিক করা হলো UI-তে প্রপার ফিডব্যাক দেওয়ার জন্য
+    const isSingleProduct = variants.length === 0
+    return successResponse(res, {
+      statusCode: 200,
+      message: isSingleProduct
+        ? 'Product successfully converted to single product with base stock.'
+        : 'Product variants synced successfully.',
+    })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    next(error)
+  } finally {
+    client.release()
+  }
+}
+
+// =============================================
+// INVENTORY UPDATE
+// PATCH /api/products/:slug/inventory
+// =============================================
+
+export const handleUpdateInventory = async (req, res, next) => {
+  try {
+    const { slug } = req.params
+    const { product_variant_id, stock_quantity } = req.body
+
+    // ১. আর্লি ভ্যালিডেশন (ডেটাবেজে যাওয়ার আগেই আটকে দেওয়া)
+    if (!product_variant_id) {
+      throw createHttpError(400, 'Variant id is required')
+    }
+    if (stock_quantity < 0) {
+      throw createHttpError(400, 'Quantity cannot be negative')
+    }
+
+    // ২. সরাসরি pool.query ব্যবহার (no transaction need so, no client or release)
+    const updatedResult = await pool.query(
+      `
+      UPDATE inventory i
+      SET 
+        quantity = $1,
+        updated_at = CURRENT_TIMESTAMP
+      FROM product_variants pv
+      JOIN products p ON p.id = pv.product_id
+      WHERE i.product_variant_id = $2 
+        AND pv.id = $2
+        AND p.slug = $3
+      RETURNING i.*
+      `,
+      [stock_quantity, product_variant_id, slug],
+    )
+
+    // ৩. আইডি বা স্ল্যাগ ম্যাচ না করলে rowCount ০ হবে
+    if (updatedResult.rowCount === 0) {
+      throw createHttpError(404, 'Inventory not found or route mismatch!')
+    }
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Inventory updated successfully',
+      payload: {
+        inventory: updatedResult.rows[0],
+      },
+    })
+  } catch (error) {
+    next(error) // এখানে কোনো rollback বা release নাই, কারণ pool নিজেই সব হ্যান্ডেল করছে
+  }
+}
+
+export const handleDeleteProduct = async (req, res, next) => {
+  const client = await pool.connect()
+
+  try {
+    const { id } = req.params
+
+    // =========================
+    // 1. Validate Input
+    // =========================
+    if (!id) {
+      throw createHttpError(400, 'Product ID is required')
+    }
+
+    // =========================
+    // 2. Check Product Exists
+    // =========================
+    const existingProductResult = await client.query(
+      `
+      SELECT
+        id,
+        title,
+        slug,
+        sku,
+        created_at
+      FROM products
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [id],
+    )
+
+    if (existingProductResult.rows.length === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    const existingProduct = existingProductResult.rows[0]
+
+    // =========================
+    // 3. Check Whether Product Has Any Orders
+    // =========================
+    // If this product appears in any order_items row,
+    // product deletion is blocked.
+    //
+    // This is the safest business rule because:
+    // - Order history must remain intact
+    // - Financial records must remain consistent
+    // - Customer invoices must continue to reference products
+    const orderUsageResult = await client.query(
+      `
+      SELECT
+        COUNT(*)::INTEGER AS total_order_references
+      FROM order_items
+      WHERE product_id = $1
+      `,
+      [id],
+    )
+
+    const totalOrderReferences = orderUsageResult.rows[0].total_order_references
+
+    if (totalOrderReferences > 0) {
+      throw createHttpError(
+        400,
+        'This product cannot be deleted because it is used in existing orders',
+      )
+    }
+
+    // =========================
+    // 4. Begin Transaction
+    // =========================
+    await client.query('BEGIN')
+
+    // =========================
+    // 5. Delete Product
+    // =========================
+    // Related records will be deleted automatically because of:
+    // - product_variants.product_id ON DELETE CASCADE
+    // - product_images.product_id ON DELETE CASCADE
+    // - inventory -> cascades through product_variants
+    // - variant_options -> cascades through product_variants
+    const deleteResult = await client.query(
+      `
+      DELETE FROM products
+      WHERE id = $1
+      RETURNING
+        id,
+        title,
+        slug,
+        sku,
+        created_at
+      `,
+      [id],
+    )
+
+    // Safety check
+    if (deleteResult.rows.length === 0) {
+      throw createHttpError(404, 'Product not found')
+    }
+
+    // =========================
+    // 6. Commit Transaction
+    // =========================
+    await client.query('COMMIT')
+
+    // =========================
+    // 7. Success Response
+    // =========================
+    return successResponse(res, {
+      statusCode: 200,
+      message: 'Product deleted successfully',
+      payload: {
+        deletedProduct: deleteResult.rows[0],
       },
     })
   } catch (error) {

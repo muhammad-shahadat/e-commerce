@@ -4,9 +4,9 @@ import { Loader2 } from 'lucide-react'
 
 import { useGetProduct } from '../../hooks/useProductQueries'
 import ProductBasicInfoForm from '../../components/admin/ProductBasicInfoForm'
-// import ProductImagesForm from './ProductImagesForm';
-// import ProductVariantsForm from './ProductVariantsForm';
-// import InventoryForm from './InventoryForm';
+import ProductImagesForm from '../../components/admin/ProductImagesForm'
+import ProductVariantsForm from '../../components/admin/ProductVariantsForm'
+import InventoryForm from '../../components/admin/InventoryForm'
 
 const ProductEditPage = () => {
   const [searchParams] = useSearchParams()
@@ -51,7 +51,7 @@ const ProductEditPage = () => {
         <header className="flex items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm font-bold text-blue-600 uppercase tracking-wider">
-              <span>Management</span> / <span>Edit Product</span>
+              <span>Product Management</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-800">
               Modify:{' '}
@@ -70,13 +70,24 @@ const ProductEditPage = () => {
               categoryTree={categoryTree}
             />
 
-            {/* <ProductVariantsForm product={product} variants={productData.variants} /> */}
+            <ProductVariantsForm
+              productSlug={product.slug}
+              initialVariants={productData.variants}
+            />
           </div>
 
           {/* Right Column - Media & Stock Status */}
           <div className="space-y-6">
-            {/* <ProductImagesForm images={productData.images} /> */}
-            {/* <InventoryForm product={product} /> */}
+            {/* আপনার নতুন প্রোডাকশন লেভেল ইমেজ ফর্ম কল করা হলো */}
+            <ProductImagesForm
+              productSlug={product.slug}
+              initialImages={productData.images}
+            />
+            <InventoryForm
+              productSlug={product.slug}
+              variants={productData.variants}
+              images={productData.images}
+            />
           </div>
         </div>
       </div>
