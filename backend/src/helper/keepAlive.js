@@ -9,7 +9,7 @@ export const initKeepAlive = () => {
     try {
       // 💡 এখানে লোকালহোস্টের মতো রেন্ডারের ক্ষেত্রেও শেষে /health রুটটাই কল হবে
       const backendUrl =
-        process.env.BACKEND_URL || 'http://localhost:3000/health'
+        process.env.BACKEND_HEALTH_URL || 'http://localhost:3000/health'
 
       await axios.get(backendUrl)
       console.log('🔄 Self-ping successful: Server is awake.')
