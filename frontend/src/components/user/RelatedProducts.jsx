@@ -15,7 +15,7 @@ const RelatedProducts = ({ categoryId, currentProductId }) => {
     isError,
   } = useGetRelatedProducts(categoryId, currentProductId, limit)
 
-  const categorySlug = relatedProducts?.[0].category_slug
+  const categorySlug = relatedProducts?.[0]?.category_slug || []
   const handleSeeMore = () => {
     if (categorySlug) {
       navigate(`/shop?category=${categorySlug}`)

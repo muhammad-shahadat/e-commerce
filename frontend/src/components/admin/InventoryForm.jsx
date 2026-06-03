@@ -86,16 +86,17 @@ const InventoryForm = ({ productSlug, variants = [], images = [] }) => {
       </div>
 
       {/* 💡 সিঙ্গেল প্রোডাক্ট মোড ভিউ */}
+      {/* Instead of IIFE = Immediately Invoked Function Expression, you can use separate componenet */}
       {isSingleProduct &&
         (() => {
-          const singleVar = variants[0]
+          const singleVariant = variants[0]
           const isCurrentPending =
-            isPending && submittingId === singleVar.product_variant_id
+            isPending && submittingId === singleVariant.product_variant_id
 
           return (
             <form
               onSubmit={(e) =>
-                handleSingleSubmit(e, singleVar.product_variant_id)
+                handleSingleSubmit(e, singleVariant.product_variant_id)
               }
               className="p-3 border border-emerald-100 bg-emerald-50/10 rounded-xl flex items-center justify-between gap-3"
             >
@@ -106,7 +107,7 @@ const InventoryForm = ({ productSlug, variants = [], images = [] }) => {
                 <p className="text-[11px] font-mono text-gray-500 mt-1 truncate">
                   SKU:{' '}
                   <span className="text-gray-700 font-semibold">
-                    {singleVar.final_sku || 'N/A'}
+                    {singleVariant.final_sku || 'N/A'}
                   </span>
                 </p>
               </div>
@@ -116,10 +117,10 @@ const InventoryForm = ({ productSlug, variants = [], images = [] }) => {
                   type="number"
                   min="0"
                   required
-                  value={stockInputs[singleVar.product_variant_id] ?? ''}
+                  value={stockInputs[singleVariant.product_variant_id] ?? ''}
                   onChange={(e) =>
                     handleStockChange(
-                      singleVar.product_variant_id,
+                      singleVariant.product_variant_id,
                       e.target.value,
                     )
                   }

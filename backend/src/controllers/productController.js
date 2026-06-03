@@ -1111,7 +1111,7 @@ export const handleSyncProductVariants = async (req, res, next) => {
 }
 
 // =============================================
-// INVENTORY UPDATE
+// FOR Single INVENTORY UPDATE
 // PATCH /api/products/:slug/inventory
 // =============================================
 

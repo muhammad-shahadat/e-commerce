@@ -67,8 +67,10 @@ const NewCollection = () => {
             let currentPrice =
               Number(product.base_price) +
               Number(product.min_price_modifier || 0)
-            currentPrice =
-              currentPrice - currentPrice * (product.discount_percent / 100)
+            currentPrice = (
+              currentPrice -
+              currentPrice * (product.discount_percent / 100)
+            ).toFixed(2)
             return (
               <div
                 key={product.id}

@@ -101,7 +101,7 @@ const DashboardOverview = () => {
         </div>
 
         <a
-          href={`${import.meta.env.VITE_CUSTOMER_SITE_URL || '#'}`}
+          href={`${import.meta.env.VITE_CUSTOMER_SITE_URL || 'http://localhost:5173/'}`}
           target="_blank"
           rel="noopener noreferrer"
           className="z-10 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-xl transition-all shadow-lg active:scale-95 text-sm whitespace-nowrap group cursor-pointer"

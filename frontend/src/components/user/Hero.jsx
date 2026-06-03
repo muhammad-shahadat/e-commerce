@@ -1,7 +1,7 @@
 import React from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination, EffectFade } from 'swiper/modules'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, LayoutDashboard } from 'lucide-react'
 
 import 'swiper/css'
 import 'swiper/css/pagination'
@@ -50,7 +50,25 @@ const Hero = () => {
 
   return (
     // Set max-width and mx-auto to center content on large screens (1440px limit)
-    <section className="w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-10 py-4">
+    <section className="relative w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-10 py-4">
+      {/* ─── ADMIN DASHBOARD BUTTON ─────────────────────────────────── */}
+      {/* এই বাটনটি হিরো সেকশনের টপ-রাইটে থাকবে, স্লাইডারের ওপরে ডিস্টার্ব করবে না */}
+      <div className="absolute top-8 right-8 md:right-12 lg:right-14 z-20">
+        <a
+          href={`${import.meta.env.VITE_ADMIN_SITE_URL || 'http://localhost:5173/admin'}`} // 👈 আপনার পরিবেশ ভেরিয়েবল অনুযায়ী চেঞ্জ করে নিয়েন
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 bg-slate-900/90 text-white hover:bg-slate-900 border border-slate-800/50 backdrop-blur-sm font-bold rounded-xl transition-all shadow-lg active:scale-95 text-xs sm:text-sm whitespace-nowrap group cursor-pointer"
+        >
+          <LayoutDashboard
+            size={16}
+            className="text-indigo-400 group-hover:rotate-6 transition-transform"
+          />
+          <span>Go to Admin Dashboard</span>
+        </a>
+      </div>
+      {/* ────────────────────────────────────────────────────────────── */}
+
       <Swiper
         spaceBetween={0}
         effect={'fade'}
