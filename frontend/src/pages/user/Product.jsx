@@ -3,10 +3,10 @@ import { useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 
 import { useGetProduct } from '../../hooks/useProductQueries'
-import Breadcrumbs from '../../Components/user/Breadcrumbs/Breadcrumbs'
-import ProductDisplay from '../../Components/user/ProductDisplay'
-import DescriptionBox from '../../Components/user/DescriptionBox/DescriptionBox'
-import RelatedProducts from '../../Components/user/RelatedProducts'
+import Breadcrumbs from '../../components/user/Breadcrumbs/Breadcrumbs'
+import ProductDisplay from '../../components/user/ProductDisplay'
+import DescriptionBox from '../../components/user/DescriptionBox/DescriptionBox'
+import RelatedProducts from '../../components/user/RelatedProducts'
 
 const Product = () => {
   const { slug } = useParams()

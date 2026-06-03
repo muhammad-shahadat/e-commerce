@@ -1,7 +1,7 @@
 import React from 'react'
 import { ShoppingBag } from 'lucide-react'
 import { Link } from 'react-router-dom' // আপনার রাউটিং অনুযায়ী
-import CartItemsProduct from '../../Components/user/CartItemsProduct/CartItemsProduct'
+import CartItemsProduct from '../../components/user/CartItemsProduct/CartItemsProduct'
 import CartItemsTotal from '../../components/user/CartItemsTotal/CartItemsTotal'
 import usecartStore from '../../stores/useCartStore'
 
