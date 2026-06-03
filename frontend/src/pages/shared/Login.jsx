@@ -1,9 +1,9 @@
-import React, { useContext, useState } from 'react'
-import { ShopContext } from '../../context/ShopContext'
+import React, { useState } from 'react'
+import useUIStore from '../../stores/useUIStore'
 import { User, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 
 const Login = () => {
-  const { isMenuOpen } = useContext(ShopContext)
+  const { isMenuOpen } = useUIStore()
   const [showPassword, setShowPassword] = useState(false)
 
   return (
