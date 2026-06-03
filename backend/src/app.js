@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import createHttpError from 'http-errors'
 
@@ -19,6 +20,7 @@ app.use(
   }),
 )
 app.use(cookieParser())
+app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
