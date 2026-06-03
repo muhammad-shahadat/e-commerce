@@ -30,7 +30,8 @@ function App() {
       try {
         // 💡 আপনার ব্যাকএন্ডের হেলথ চেক রুট বা মেইন রুট (Render-এর URL)
         const backendUrl =
-          import.meta.env.BACKEND_HEALTH_URL || 'http://localhost:3000/health'
+          import.meta.env.VITE_BACKEND_HEALTH_URL ||
+          'http://localhost:3000/health'
         await axios.get(backendUrl)
       } catch (error) {
         console.error('Server wakeup failed or cold start:', error.message)
