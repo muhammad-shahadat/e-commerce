@@ -8,27 +8,28 @@ import {
   PanelLeftOpen,
   X,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 import letterIcon from '../../assets/letter-s.png'
 
 const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const navigate = useNavigate()
 
   const SidebarItem = ({ icon: Icon, label, path }) => {
     return (
-      <button
-        onClick={() => navigate(path)}
-        className="group w-full cursor-pointer"
+      <Link
+        to={path}
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="group flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-lg text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 w-full"
       >
-        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-lg text-gray-600 group-hover:bg-gray-100 group-hover:text-gray-800 transition-all duration-200">
-          <Icon size={22} className="text-gray-500 group-hover:text-blue-300" />
-          <span className={`${isCollapsed ? 'md:hidden' : 'md:block'} block`}>
-            {label}
-          </span>
-        </div>
-      </button>
+        <Icon
+          size={22}
+          className="text-gray-500 group-hover:text-blue-500 transition-colors"
+        />
+        <span className={`${isCollapsed ? 'md:hidden' : 'md:block'} block`}>
+          {label}
+        </span>
+      </Link>
     )
   }
 
@@ -45,14 +46,14 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       {/* 2. Sidebar Container */}
       <aside
         className={`  
-                ${isCollapsed ? 'md:w-20' : 'md:w-60'}
-                ${isMobileMenuOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
-                fixed md:relative z-1000 flex flex-col h-screen bg-white border-r border-gray-200 shadow-sm transition-all duration-300
-            `}
+          ${isCollapsed ? 'md:w-20' : 'md:w-60'}
+          ${isMobileMenuOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
+          fixed md:relative z-[1001] flex flex-col h-screen bg-white border-r border-gray-200 shadow-sm transition-all duration-300
+        `}
       >
         {/* Logo + Toggle */}
         <div
-          className={`${isCollapsed ? 'md:justify-center' : 'md:justify-baseline'} h-17 flex items-center justify-between border-b border-r border-gray-200 px-2`}
+          className={`${isCollapsed ? 'md:justify-center' : 'md:justify-baseline'} h-16 flex items-center justify-between border-b border-gray-100 px-4`}
         >
           <div
             className={`${isCollapsed ? 'md:hidden' : 'md:flex'} flex items-center gap-2 text-xl font-semibold text-blue-500`}
@@ -60,6 +61,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
             <img className="w-7 h-7" src={letterIcon} alt="letter-icon" />
             <span>Shopper</span>
           </div>
+
           {/* Desktop Toggle */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -72,7 +74,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
             )}
           </button>
 
-          {/*Mobile Cross Icon */}
+          {/* Mobile Cross Icon */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="md:hidden p-1 hover:bg-gray-100 rounded-full cursor-pointer"
@@ -81,9 +83,9 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
           </button>
         </div>
 
-        {/*sidebar menu items*/}
-        <div className="flex flex-col justify-center gap-1 overflow-y-auto overflow-x-hidden p-3">
-          <SidebarItem icon={LayoutDashboard} label="Dashboard" path="" />
+        {/* Sidebar menu items */}
+        <div className="flex flex-col gap-1 overflow-y-auto overflow-x-hidden p-3">
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" path="/admin" />
           <SidebarItem
             icon={ShoppingCart}
             label="Orders"
