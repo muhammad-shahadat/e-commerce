@@ -27,7 +27,6 @@ const Header = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     if (searchTerm.trim()) {
-      // সরাসরি শপ পেজে সার্চ কুয়েরি পাঠানো
       navigate(`/shop?search=${searchTerm}`)
       setIsMenuOpen(false)
     }
@@ -37,24 +36,27 @@ const Header = () => {
     <>
       <header className="fixed top-0 left-0 w-full bg-white shadow-sm z-[999] border-b border-gray-100">
         {/* --- মেইন কন্টেইনার --- */}
-        <div className="h-16 md:h-20 flex items-center justify-between px-4 md:px-16 gap-4 md:gap-10">
-          {/* ১. লোগো এবং মেনু বাটন */}
-          <div className="flex items-center gap-3">
+        <div className="h-16 md:h-20 flex items-center justify-between px-4 md:px-16 gap-2 md:gap-10">
+          {/* ১. লোগো এবং মেনু বাটন (shrink-0 দেওয়া হয়েছে যেন মোবাইল স্ক্রিনে চ্যাপ্টা না হয়) */}
+          <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
             <button
               onClick={() => setIsMenuOpen(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-all"
+              className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-all"
             >
-              <Menu size={26} className="text-gray-700" />
+              <Menu
+                size={24}
+                className="text-gray-700 md:w-[26px] md:h-[26px]"
+              />
             </button>
-            <Link to="/" className="flex items-center gap-1.5">
-              <ShoppingBag className="text-blue-600" size={28} />
-              <span className="uppercase text-lg md:text-xl font-black tracking-tighter text-gray-800">
+            <Link to="/" className="flex items-center gap-1 md:gap-1.5">
+              <ShoppingBag className="text-blue-600 w-6 h-6 md:w-7 md:h-7" />
+              <span className="uppercase text-base md:text-xl font-black tracking-tighter text-gray-800">
                 Shopper
               </span>
             </Link>
           </div>
 
-          {/* ২. ডেস্কটপ সার্চবার (মোবাইলে হিডেন থাকবে) */}
+          {/* ২. ডেস্কটপ সার্চবার (md:flex) */}
           <form
             onSubmit={handleSearch}
             className="hidden md:flex flex-1 max-w-2xl relative"
@@ -74,38 +76,38 @@ const Header = () => {
             </button>
           </form>
 
-          {/* ৩. ইউজার এবং কার্ড আইকন */}
-          <div className="flex items-center gap-2 md:gap-6">
+          {/* ৩. ইউজার এবং কার্ট আইকন (flex-shrink-0 দিয়ে আইকনগুলোকে ডানে ফিক্সড রাখা হয়েছে) */}
+          <div className="flex items-center gap-1 md:gap-6 flex-shrink-0">
             <Link
               to="/login"
-              className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-1 p-2 font-bold text-gray-700 hover:text-blue-600 transition-colors"
             >
-              <User size={24} />
-              <span className="hidden md:block">Login</span>
+              <User size={22} className="md:w-6 md:h-6" />
+              <span className="hidden md:block text-sm">Login</span>
             </Link>
 
             <Link
               to="/cart"
-              className="relative p-2.5 bg-gray-50 rounded-full hover:bg-blue-50 transition-all group"
+              className="relative p-2 bg-gray-50 rounded-full hover:bg-blue-50 transition-all group"
             >
               <ShoppingCart
-                size={24}
-                className="text-gray-700 group-hover:text-blue-600"
+                size={22}
+                className="text-gray-700 group-hover:text-blue-600 md:w-6 md:h-6"
               />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-sm">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] md:text-[10px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full font-bold shadow-sm">
                 {getTotalCartItems()}
               </span>
             </Link>
           </div>
         </div>
 
-        {/* ৪. মোবাইল সার্চবার (শুধু মোবাইলে দেখাবে) */}
-        <div className="md:hidden px-4 pb-3">
+        {/* ৪. মোবাইল সার্চবার (প্যাডিং এবং বর্ডার-টপ দিয়ে সুন্দর ফিনিশিং দেওয়া হয়েছে) */}
+        <div className="md:hidden px-4 pb-3 pt-1 border-t border-gray-50">
           <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
-              placeholder="Search products (T-shirt, Watch...)"
-              className="w-full bg-gray-100 border-none rounded-xl py-2.5 px-4 pr-10 focus:ring-1 focus:ring-blue-400 outline-none text-sm"
+              placeholder="Search products..."
+              className="w-full bg-gray-100 border-none rounded-xl py-2 px-4 pr-10 focus:ring-1 focus:ring-blue-400 outline-none text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -119,7 +121,7 @@ const Header = () => {
         </div>
       </header>
 
-      {/* --- সাইডবার ড্রয়ার (Mobile & Desktop দুটোর জন্যই) --- */}
+      {/* --- সাইডবার ড্রয়ার --- */}
       <div
         className={`fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[1000] transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
         onClick={() => setIsMenuOpen(false)}
@@ -162,16 +164,13 @@ const Header = () => {
               Categories
             </p>
 
-            {/* ডাইনামিকভাবে ক্যাটাগরি ম্যাপিং */}
             <div className="flex flex-col gap-1">
-              {/* ১. লোডিং অবস্থা - ছোট একটা স্কেলিটন বা টেক্সট */}
               {isLoading && (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 size={18} className="animate-spin" />
                 </div>
               )}
 
-              {/* ২. এরর হ্যান্ডেলিং - রিলোড বাটন বা মেসেজ */}
               {isError && (
                 <div className="px-3 py-2 text-xs text-red-500 bg-red-50 rounded-xl">
                   Failed to load categories.
@@ -181,7 +180,7 @@ const Header = () => {
               {!isLoading &&
                 !isError &&
                 categories
-                  ?.filter((cat) => !cat.parent_id) // শুধুমাত্র মেইন প্যারেন্ট ক্যাটাগরিগুলো দেখাবে
+                  ?.filter((cat) => !cat.parent_id)
                   .map((category) => (
                     <Link
                       key={category.id}
@@ -210,7 +209,11 @@ const Header = () => {
         </div>
       </aside>
 
-      {/* কনটেন্ট যেন হেডারের নিচে না ঢোকে তার জন্য স্পেসার */}
+      {/* 💡 ক্যালকুলেটেড রেসপনসিভ স্পেসার:
+        মোবাইলে মেইন ন্যাভবার (h-16 = 64px) + মোবাইল সার্চবার (pb-3 + pt-1 + input = প্রায় 52px) = মোট 116px।
+        ডেস্কটপে মোবাইল সার্চবার হিডেন থাকে আর ন্যাভবার হয়ে যায় h-20 (80px)।
+        তাই স্পেসারে h-[116px] md:h-20 ক্লাসটি একদম নিখুঁত কাজ করবে।
+      */}
       <div className="h-[116px] md:h-20"></div>
     </>
   )
