@@ -61,8 +61,10 @@ const ProductList = () => {
     const newParams = new URLSearchParams(searchParams)
     if (value) newParams.set(key, value)
     else newParams.delete(key)
+    // যদি চেঞ্জ হওয়া কি-টা 'page' না হয়ে অন্য কিছু (category, sort, search) হয়,
+    // শুধুমাত্র তখনই পেজ রিসেট করে ১ নম্বরে পাঠাবো।
+    if (key != 'page') newParams.set('page', 1)
 
-    newParams.set('page', 1)
     setSearchParams(newParams)
   }
 
