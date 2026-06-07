@@ -1,3 +1,4 @@
+import crypto from 'crypto' // node.js built in module
 import createHttpError from 'http-errors'
 import slugify from 'slugify'
 
@@ -34,9 +35,16 @@ export const handleCreateCategory = async (req, res, next) => {
 
     const categorySlug = slugify(categoryName, { lower: true, strict: true })
 
-    const finalCategoryCode = categoryCode
-      ? categoryCode
-      : categoryName.substring(0, 3).toUpperCase()
+    let finalCategoryCode = categoryCode
+    if (!finalCategoryCode) {
+      const cleanName = categoryName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+      const baseCode = cleanName.substring(0, 3) // যেমন: HOM
+      // ২ অক্ষরের একটা ছোট র্যান্ডম স্ট্রিং (যেমন: A1, 9X) যোগ করব যেন কখনো ডুপ্লিকেট না হয়
+      const randomSuffix = crypto.randomBytes(1).toString('hex').toUpperCase()
+      finalCategoryCode = `${baseCode}${randomSuffix}` // আউটপুট হবে: HOM8F, HOM2A etc.
+    } else {
+      finalCategoryCode = finalCategoryCode.toUpperCase()
+    }
 
     const finalParentId = parentId || null
 
