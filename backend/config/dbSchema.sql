@@ -1,3 +1,7 @@
+-- ======================================================================================================
+-- 🚀 SHOPPER ECOMMERCE - PRODUCTION DATABASE SCHEMA (MVP v1.0) For GUEST CHECKOUT E-COMMERCE PLATFORM
+-- ======================================================================================================
+
 -- Enable UUID extension for better security
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -10,19 +14,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- 2. USERS TABLE
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    hash_password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('admin', 'customer')),
-    is_banned BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TRIGGER set_timestamp_users BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
 
 -- 3. CATEGORIES TABLE
 CREATE TABLE categories (
@@ -103,22 +95,7 @@ CREATE TABLE product_images (
 
 CREATE TRIGGER set_timestamp_product_images BEFORE UPDATE ON product_images FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
--- 9. USER ADDRESSES TABLE
-CREATE TABLE user_addresses (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    address_line1 VARCHAR(255) NOT NULL,
-    address_line2 VARCHAR(255),
-    city VARCHAR(100) NOT NULL,
-    state VARCHAR(100),
-    postal_code VARCHAR(20),
-    country VARCHAR(100) NOT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
-CREATE TRIGGER set_timestamp_user_addresses BEFORE UPDATE ON user_addresses FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
 -- 10. ORDERS TABLE
 CREATE TABLE orders (
@@ -160,47 +137,75 @@ CREATE TABLE order_items (
     quantity INTEGER NOT NULL CHECK (quantity > 0)
 );
 
+-- =====================================================
+-- ✅ END OF PRODUCTION SCHEMA (MVP v1.0)
+-- =====================================================
 
 
 
 
--- 12. CARTS & CART ITEMS
-CREATE TABLE carts (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE cart_items (
-    id SERIAL PRIMARY KEY,
-    cart_id INTEGER NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
-    product_variant_id INTEGER NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- AUTOMATIC TIMESTAMP TRIGGER ATTACHMENTS
--- Repeat this for every table that has updated_at
-CREATE TRIGGER set_timestamp_users BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-
-CREATE TRIGGER set_timestamp_orders BEFORE UPDATE ON orders FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-CREATE TRIGGER set_timestamp_inventory BEFORE UPDATE ON inventory FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
-
--- PRODUCTION INDEXES FOR PERFORMANCE
-CREATE INDEX idx_products_slug ON products(slug);
-CREATE INDEX idx_products_category ON products(category_id) WHERE is_active = TRUE;
-CREATE INDEX idx_users_email_lower ON users (LOWER(email));
 
 
 
+-- =====================================================
+-- ❌ SKIPPED FOR MVP v1.0 (Comment this entire section)
+-- =====================================================
 
--- ১. আগে এক্সটেনশন ইনাবল করতে হবে
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- ২. টেবিল ডিক্লেয়ার করার সময় SERIAL এর বদলে এভাবে লিখবেন
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -- এটা অটোমেটিক লম্বা ইউনিক আইডি বানাবে
-    name VARCHAR(100) NOT NULL,
-    ...
-);
+
+-- -- 2. USERS TABLE
+-- CREATE TABLE users (
+--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--     name VARCHAR(100) NOT NULL,
+--     username VARCHAR(100) UNIQUE NOT NULL,
+--     email VARCHAR(150) UNIQUE NOT NULL,
+--     hash_password VARCHAR(255) NOT NULL,
+--     role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('admin', 'customer')),
+--     is_banned BOOLEAN DEFAULT FALSE,
+--     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );
+-- CREATE TRIGGER set_timestamp_users BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+-- CREATE INDEX idx_users_email_lower ON users (LOWER(email));
+
+-- -- 9. USER ADDRESSES TABLE
+-- CREATE TABLE user_addresses (
+--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+--     address_line1 VARCHAR(255) NOT NULL,
+--     address_line2 VARCHAR(255),
+--     city VARCHAR(100) NOT NULL,
+--     state VARCHAR(100),
+--     postal_code VARCHAR(20),
+--     country VARCHAR(100) NOT NULL,
+--     is_default BOOLEAN DEFAULT FALSE,
+--     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );
+
+-- CREATE TRIGGER set_timestamp_user_addresses BEFORE UPDATE ON user_addresses FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+-- -- 12. CARTS & CART ITEMS
+-- CREATE TABLE carts (
+--     id SERIAL PRIMARY KEY,
+--     user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+--     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );
+
+-- CREATE TABLE cart_items (
+--     id SERIAL PRIMARY KEY,
+--     cart_id INTEGER NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
+--     product_variant_id INTEGER NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+--     quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+--     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );
+
+
+
+-- =====================================================
+-- ✅ END OF SKIPPED SECTION
+-- =====================================================
+
+
+
+

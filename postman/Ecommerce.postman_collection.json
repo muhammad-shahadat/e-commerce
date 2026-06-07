@@ -1,0 +1,715 @@
+{
+  "info": {
+    "_postman_id": "62fda4f5-0af2-467f-88fa-8ce86b4e6035",
+    "name": "Ecommerce",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49325428",
+    "_collection_link": "https://go.postman.co/collection/49325428-62fda4f5-0af2-467f-88fa-8ce86b4e6035?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "productRoute",
+      "item": [
+        {
+          "name": "create product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Premium Cotton T-Shirt",
+                  "type": "text",
+                  "uuid": "61f3e507-253e-4bb2-b383-c23f154f85a3"
+                },
+                {
+                  "key": "description",
+                  "value": "100% organic cotton, breathable.",
+                  "type": "text",
+                  "uuid": "79541478-243d-496b-a1b8-8c89f1f04c44"
+                },
+                {
+                  "key": "base_price",
+                  "value": "550",
+                  "type": "text",
+                  "uuid": "ebbd162b-fe0e-4299-a520-f14d17fe22e0"
+                },
+                {
+                  "key": "discount_percent",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "f4ad4b58-15d5-4080-b183-a911b50762cb"
+                },
+                {
+                  "key": "category_id",
+                  "value": "11d77529-ed60-4f1e-833f-7e652c14616f",
+                  "type": "text",
+                  "uuid": "98de2eeb-de37-4f71-913e-a2d6729bccad"
+                },
+                {
+                  "key": "variants",
+                  "value": "[\n  {\n    \"price_modifier\": 50,\n    \"quantity\": 20,\n    \"options\": [\n      { \"option_name\": \"Size\", \"option_value\": \"XL\" },\n      { \"option_name\": \"Color\", \"option_value\": \"Black\" }\n    ]\n  }\n]",
+                  "type": "text",
+                  "uuid": "ec793db6-d590-4b45-b0e0-b919097655eb"
+                },
+                {
+                  "key": "mainImage",
+                  "type": "file",
+                  "uuid": "9d38e4f2-8d72-4d19-88d2-afd04c7d2fd3",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (3).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "8b9e0013-22e8-457b-99ea-95747e87cb2c",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (2).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "40d32f74-81dd-4d9d-a9c2-383c69392401",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (4).jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get all products",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Premium Cotton T-Shirt",
+                  "type": "text",
+                  "uuid": "61f3e507-253e-4bb2-b383-c23f154f85a3"
+                },
+                {
+                  "key": "description",
+                  "value": "100% organic cotton, breathable.",
+                  "type": "text",
+                  "uuid": "79541478-243d-496b-a1b8-8c89f1f04c44"
+                },
+                {
+                  "key": "base_price",
+                  "value": "550",
+                  "type": "text",
+                  "uuid": "ebbd162b-fe0e-4299-a520-f14d17fe22e0"
+                },
+                {
+                  "key": "discount_percent",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "f4ad4b58-15d5-4080-b183-a911b50762cb"
+                },
+                {
+                  "key": "category_id",
+                  "value": "11d77529-ed60-4f1e-833f-7e652c14616f",
+                  "type": "text",
+                  "uuid": "98de2eeb-de37-4f71-913e-a2d6729bccad"
+                },
+                {
+                  "key": "variants",
+                  "value": "[\n  {\n    \"price_modifier\": 50,\n    \"quantity\": 20,\n    \"options\": [\n      { \"option_name\": \"Size\", \"option_value\": \"XL\" },\n      { \"option_name\": \"Color\", \"option_value\": \"Black\" }\n    ]\n  }\n]",
+                  "type": "text",
+                  "uuid": "ec793db6-d590-4b45-b0e0-b919097655eb"
+                },
+                {
+                  "key": "mainImage",
+                  "type": "file",
+                  "uuid": "9d38e4f2-8d72-4d19-88d2-afd04c7d2fd3",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (3).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "8b9e0013-22e8-457b-99ea-95747e87cb2c",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (2).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "40d32f74-81dd-4d9d-a9c2-383c69392401",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (4).jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get related products",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Premium Cotton T-Shirt",
+                  "type": "text",
+                  "uuid": "61f3e507-253e-4bb2-b383-c23f154f85a3"
+                },
+                {
+                  "key": "description",
+                  "value": "100% organic cotton, breathable.",
+                  "type": "text",
+                  "uuid": "79541478-243d-496b-a1b8-8c89f1f04c44"
+                },
+                {
+                  "key": "base_price",
+                  "value": "550",
+                  "type": "text",
+                  "uuid": "ebbd162b-fe0e-4299-a520-f14d17fe22e0"
+                },
+                {
+                  "key": "discount_percent",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "f4ad4b58-15d5-4080-b183-a911b50762cb"
+                },
+                {
+                  "key": "category_id",
+                  "value": "11d77529-ed60-4f1e-833f-7e652c14616f",
+                  "type": "text",
+                  "uuid": "98de2eeb-de37-4f71-913e-a2d6729bccad"
+                },
+                {
+                  "key": "variants",
+                  "value": "[\n  {\n    \"price_modifier\": 50,\n    \"quantity\": 20,\n    \"options\": [\n      { \"option_name\": \"Size\", \"option_value\": \"XL\" },\n      { \"option_name\": \"Color\", \"option_value\": \"Black\" }\n    ]\n  }\n]",
+                  "type": "text",
+                  "uuid": "ec793db6-d590-4b45-b0e0-b919097655eb"
+                },
+                {
+                  "key": "mainImage",
+                  "type": "file",
+                  "uuid": "9d38e4f2-8d72-4d19-88d2-afd04c7d2fd3",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (3).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "8b9e0013-22e8-457b-99ea-95747e87cb2c",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (2).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "40d32f74-81dd-4d9d-a9c2-383c69392401",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (4).jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/related/11d77529-ed60-4f1e-833f-7e652c14616f?exclude=39c08d98-2c3b-4b68-9b81-b4e6cd3f1cc1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                "related",
+                "11d77529-ed60-4f1e-833f-7e652c14616f"
+              ],
+              "query": [
+                {
+                  "key": "exclude",
+                  "value": "39c08d98-2c3b-4b68-9b81-b4e6cd3f1cc1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get single product",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Premium Cotton T-Shirt",
+                  "type": "text",
+                  "uuid": "61f3e507-253e-4bb2-b383-c23f154f85a3"
+                },
+                {
+                  "key": "description",
+                  "value": "100% organic cotton, breathable.",
+                  "type": "text",
+                  "uuid": "79541478-243d-496b-a1b8-8c89f1f04c44"
+                },
+                {
+                  "key": "base_price",
+                  "value": "550",
+                  "type": "text",
+                  "uuid": "ebbd162b-fe0e-4299-a520-f14d17fe22e0"
+                },
+                {
+                  "key": "discount_percent",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "f4ad4b58-15d5-4080-b183-a911b50762cb"
+                },
+                {
+                  "key": "category_id",
+                  "value": "11d77529-ed60-4f1e-833f-7e652c14616f",
+                  "type": "text",
+                  "uuid": "98de2eeb-de37-4f71-913e-a2d6729bccad"
+                },
+                {
+                  "key": "variants",
+                  "value": "[\n  {\n    \"price_modifier\": 50,\n    \"quantity\": 20,\n    \"options\": [\n      { \"option_name\": \"Size\", \"option_value\": \"XL\" },\n      { \"option_name\": \"Color\", \"option_value\": \"Black\" }\n    ]\n  }\n]",
+                  "type": "text",
+                  "uuid": "ec793db6-d590-4b45-b0e0-b919097655eb"
+                },
+                {
+                  "key": "mainImage",
+                  "type": "file",
+                  "uuid": "9d38e4f2-8d72-4d19-88d2-afd04c7d2fd3",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (3).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "8b9e0013-22e8-457b-99ea-95747e87cb2c",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (2).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "40d32f74-81dd-4d9d-a9c2-383c69392401",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (4).jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/premium-cotton-t-shirt-94766",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                "premium-cotton-t-shirt-94766"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product Basic Info",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"Premium & Robust cotton-t-shirt\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/premium-cotton-t-shirt-46359/basic-info",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                "premium-cotton-t-shirt-46359",
+                "basic-info"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Product Variants",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n   \"total_quantity\": null, \r\n  \"variants\": [\r\n    {\r\n      \"product_variant_id\": \"32ef589e-643f-413e-84a4-63802ce7a2eb\",\r\n      \"price_modifier\": \"60.00\",\r\n      \"quantity\": 15,\r\n      \"options\": [\r\n        { \"option_name\": \"Size\", \"option_value\": \"XL\" },\r\n        { \"option_name\": \"Color\", \"option_value\": \"Black\" }\r\n      ]\r\n    },\r\n    {\r\n      \"product_variant_id\": null,\r\n      \"price_modifier\": \"0.00\",\r\n      \"quantity\": 25,\r\n      \"options\": [\r\n        { \"option_name\": \"Size\", \"option_value\": \"X\" },\r\n        { \"option_name\": \"Color\", \"option_value\": \"Blue\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/premium-cotton-t-shirt-94766/variants",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                "premium-cotton-t-shirt-94766",
+                "variants"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Inventory",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"product_variant_id\": \"32ef589e-643f-413e-84a4-63802ce7a2eb\",\r\n  \"stock_quantity\": 100\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/products/premium-cotton-t-shirt-94766/inventory",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "products",
+                "premium-cotton-t-shirt-94766",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "categoryRoute",
+      "item": [
+        {
+          "name": "get all categories",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Premium Cotton T-Shirt",
+                  "type": "text",
+                  "uuid": "61f3e507-253e-4bb2-b383-c23f154f85a3"
+                },
+                {
+                  "key": "description",
+                  "value": "100% organic cotton, breathable.",
+                  "type": "text",
+                  "uuid": "79541478-243d-496b-a1b8-8c89f1f04c44"
+                },
+                {
+                  "key": "base_price",
+                  "value": "550",
+                  "type": "text",
+                  "uuid": "ebbd162b-fe0e-4299-a520-f14d17fe22e0"
+                },
+                {
+                  "key": "discount_percent",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "f4ad4b58-15d5-4080-b183-a911b50762cb"
+                },
+                {
+                  "key": "category_id",
+                  "value": "11d77529-ed60-4f1e-833f-7e652c14616f",
+                  "type": "text",
+                  "uuid": "98de2eeb-de37-4f71-913e-a2d6729bccad"
+                },
+                {
+                  "key": "variants",
+                  "value": "[\n  {\n    \"price_modifier\": 50,\n    \"quantity\": 20,\n    \"options\": [\n      { \"option_name\": \"Size\", \"option_value\": \"XL\" },\n      { \"option_name\": \"Color\", \"option_value\": \"Black\" }\n    ]\n  }\n]",
+                  "type": "text",
+                  "uuid": "ec793db6-d590-4b45-b0e0-b919097655eb"
+                },
+                {
+                  "key": "mainImage",
+                  "type": "file",
+                  "uuid": "9d38e4f2-8d72-4d19-88d2-afd04c7d2fd3",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (3).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "8b9e0013-22e8-457b-99ea-95747e87cb2c",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (2).jpg"
+                },
+                {
+                  "key": "subImages",
+                  "type": "file",
+                  "uuid": "40d32f74-81dd-4d9d-a9c2-383c69392401",
+                  "src": "/C:/Users/Shahadat Hossain/Desktop/old_E-commerce/frontend/src/assets/all_collection/t-shirt (4).jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/categories/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "categories",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create category",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"categoryName\": \"Laptop\",\r\n  \"categoryCode\": \"\",\r\n  \"parentId\": \"dd4b594d-1516-4c8a-a09a-ea1932b9e3d3\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/categories/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "categories",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "orderRoute",
+      "item": [
+        {
+          "name": "create order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"customer_name\": \"Md Shahadat Hossain\",\r\n  \"customer_email\": \"shahadat@example.com\",\r\n  \"customer_phone\": \"01700000000\",\r\n  \"shipping_address_line1\": \"House 12, Road 5, Sector 7\",\r\n  \"shipping_address_line2\": \"Uttara\",\r\n  \"shipping_city\": \"Dhaka\",\r\n  \"shipping_state\": \"Dhaka\",\r\n  \"shipping_postal_code\": \"1230\",\r\n  \"shipping_country\": \"Bangladesh\",\r\n  \"payment_method\": \"COD\",\r\n  \"total\": 1250.50,\r\n  \"shipping_charge\": 60.00,\r\n  \"items\": [\r\n    {\r\n      \"product_id\": \"f8672de9-cfe1-489b-816b-75f4e158457b\",\r\n      \"product_variant_id\": \"04df9747-1b23-448e-a687-05bf58e69861\", \r\n      \"price\": 1190.50,\r\n      \"quantity\": 1\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/orders/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "orders",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get all orders with filtering",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/orders",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get single order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/orders/f853cea1-cc45-4af9-837d-86fcfa21501e",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "orders",
+                "f853cea1-cc45-4af9-837d-86fcfa21501e"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "dashboardRoute",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/admin/dashboard/stats",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "admin",
+                "dashboard",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dashboard Charts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/admin/dashboard/charts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "admin",
+                "dashboard",
+                "charts"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "inventoryRoute",
+      "item": [
+        {
+          "name": "Get Low Stock Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/admin/inventory/low-stock",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "admin",
+                "inventory",
+                "low-stock"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
