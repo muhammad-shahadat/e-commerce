@@ -29,7 +29,7 @@ const Shop = () => {
     sort,
     search,
     page,
-    limit: 12,
+    limit: 8,
   })
 
   // ডাটা ম্যাপিং সহজ করার জন্য ভেরিয়েবলে রাখা
