@@ -21,8 +21,8 @@ Shopper is a high-performance, single-store e-commerce application built with a 
     <td><b>Shopping Cart Experience</b></td>
   </tr>
   <tr>
-    <td><img src="./screenshots/storefront.png" alt="Storefront" width="100%"/></td>
-    <td><img src="./screenshots/shopping-cart.png" alt="Shopping Cart" width="100%"/></td>
+    <td><img src="./screenshots/storefront.jpg" alt="Storefront" width="100%"/></td>
+    <td><img src="./screenshots/shopping-cart.jpg" alt="Shopping Cart" width="100%"/></td>
   </tr>
 </table>
 
@@ -33,14 +33,14 @@ Shopper is a high-performance, single-store e-commerce application built with a 
     <td><b>Dynamic Variants & Stock Sync</b></td>
   </tr>
   <tr>
-    <td><img src="./screenshots/admin-dashboard.png" alt="Admin Dashboard" width="100%"/></td>
-    <td><img src="./screenshots/product-variants.png" alt="Product Management" width="100%"/></td>
+    <td><img src="./screenshots/admin-dashboard.jpg" alt="Admin Dashboard" width="100%"/></td>
+    <td><img src="./screenshots/product-variants.jpg" alt="Product Management" width="100%"/></td>
   </tr>
 </table>
 
 ### 📱 Fully Responsive Mobile View
 <p align="center">
-  <img src="./screenshots/mobile-layout.png" alt="Mobile Layout" width="320px"/>
+  <img src="./screenshots/mobile-layout.jpg" alt="Mobile Layout" width="320px"/>
 </p>
 
 ---
