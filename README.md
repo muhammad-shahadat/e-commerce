@@ -401,7 +401,7 @@ Ecommerce/
  
  
 ### 7. Setup Frontend
-#### Split terminal and run:
+#### Split terminal and go back root dir using `cd ..` then run:
 ```bash
 cd frontend
 npm install
