@@ -14,17 +14,34 @@ Shopper is a high-performance, single-store e-commerce application built with a 
 
 ## 📸 Screenshots
 
-### ☀️ Customer View (Light Mode)
-![Storefront](./screenshots/storefront.png)
+### 🖥️ Customer Storefront & Shopping Cart
+<table>
+  <tr>
+    <td><b>Home Storefront</b></td>
+    <td><b>Shopping Cart Experience</b></td>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/storefront.png" alt="Storefront" width="100%"/></td>
+    <td><img src="./screenshots/shopping-cart.png" alt="Shopping Cart" width="100%"/></td>
+  </tr>
+</table>
 
-### 📦 Admin Inventory Management
-![Admin Inventory](./screenshots/inventory.png)
+### 📊 Admin Dashboard & Complex Inventory
+<table>
+  <tr>
+    <td><b>Analytics & Workspace Dashboard</b></td>
+    <td><b>Dynamic Variants & Stock Sync</b></td>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/admin-dashboard.png" alt="Admin Dashboard" width="100%"/></td>
+    <td><img src="./screenshots/product-variants.png" alt="Product Management" width="100%"/></td>
+  </tr>
+</table>
 
-### 🗂️ Dynamic Nested Category UI
-![Category Management](./screenshots/category-ui.png)
-
-### 📱 Responsive Mobile View
-![Mobile Layout](./screenshots/mobile-view.png)
+### 📱 Fully Responsive Mobile View
+<p align="center">
+  <img src="./screenshots/mobile-layout.png" alt="Mobile Layout" width="320px"/>
+</p>
 
 ---
 
