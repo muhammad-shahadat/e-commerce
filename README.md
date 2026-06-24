@@ -57,14 +57,14 @@ Shopper is a high-performance, single-store e-commerce application built with a 
 
 ---
 
-## ⚙️ Technical Highlights
+### ⚙️ Technical Highlights
 
-### 1.Product & Variant Protection
+#### 1.Product & Variant Protection
 Products and variants that are already used in customer orders cannot be removed accidentally.
 
 Before deleting or updating product variants, the system checks related order records and prevents operations that would break historical order data.
 
-### 2.Database Transactions
+#### 2.Database Transactions
 Order creation is wrapped inside PostgreSQL transactions using:
 
 ```sql
@@ -74,7 +74,7 @@ ROLLBACK
 ```
 If any step fails during checkout, all database changes are reverted to keep data consistent.
 
-### 3.Stock Validation & Race Condition Protection
+#### 3.Stock Validation & Race Condition Protection
 Inventory updates use atomic SQL queries:
 ```sql
 UPDATE inventory
@@ -86,17 +86,17 @@ This prevents overselling products when multiple customers place orders at the s
 
 If stock is unavailable, the transaction is cancelled automatically.
 
-### 4.Invoice Printing
+#### 4.Invoice Printing
 Administrators can print clean order invoices directly from the browser using CSS print media rules.
 
 No external PDF generation library is required.
 
-### 5.Cloudinary Image Management
+#### 5.Cloudinary Image Management
 Product images are uploaded to Cloudinary.
 
 If a database operation fails after uploading images, the application automatically removes unused files to prevent orphan storage.
 
-### 6.Automatic SKU & Slug Generation
+#### 6.Automatic SKU & Slug Generation
 The system automatically generates:
 
 * **Unique product SKUs**
@@ -105,15 +105,15 @@ The system automatically generates:
 
 This reduces manual data entry and avoids duplicate identifiers.
 
-### 7.URL-Based Filtering
+#### 7.URL-Based Filtering
 Search, sorting, category filtering, and pagination are controlled through URL query parameters.
 
 Pagination automatically resets when filters change, preventing invalid page states.
 
-### 8.File Upload Handling
+#### 8.File Upload Handling
 Complex product data and multiple images are submitted together using FormData, allowing products and media to be processed in a single request.
 
-### 9.Cache Synchronization
+#### 9.Cache Synchronization
 TanStack Query automatically refreshes affected data after create, update, or delete operations.
 
 This keeps the admin dashboard and storefront synchronized without requiring manual page refreshes.
