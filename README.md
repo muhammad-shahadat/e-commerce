@@ -45,64 +45,78 @@ Shopper is a high-performance, single-store e-commerce application built with a 
 
 ---
 
-## ✨ Key Features & Architectural Capabilities
-
+## ✨ Key Features
 ### 🛍️ Comprehensive Storefront & Product Administration
-* **🗂️ Production-Level Nested Categories:** Powered by an infinite self-referencing hierarchical tree, allows adding deeply nested subcategories under any level. Driven via a recursive dropdown component syncing selected pathways dynamically in the UI.
-* **👕 Multi-Attribute Variant Matrix & Dynamic UPSERT:** Supports flexible product options (e.g., Size, Color) mapping out to independent price modifiers, distinct unique child SKUs, and localized inventory tracking.
-* **📦 Hybrid Inventory Topologies:** Features a unified toggleable administration sync model. Easily handles flat product structures (single-item inventory) and dynamically converts them to high-density multi-tier variant pools while executing deep integrity checks.
-* **🔍 Isomorphic URL-Driven Search & Filtering:** Synchronizes client-side product discovery filters (`Category`, `Sort Matrices`, and `Dynamic Search Inputs`) directly with the browser's URL search parameters. This structure facilitates robust deep-linking, ensures zero state-loss on manual page reloads, and acts as the single source of truth for downstream API query parameters.
-* **🛒 Atomic Guest Checkout & Order Lifecycle Management:** Integrated with a highly optimized guest checkout system managed via high-performance reactive states and standalone forms. Features instant state transitions across transactional modals to processing-guards, ensuring a zero-friction purchase pipeline.
-* **⚡ Reactive Multi-Query Invalidation:** Harmonizes persistent client-side caching managed via **Zustand UI hooks** with automated background cache bursting via **TanStack Query mutations**, instantly refetching dashboard indicators, product lists, and core parameters.
-* **📱 Unified Micro-Responsive Interface:** Engineered with responsive grid layers, smooth loading sequences via Lucide components, and independent module partitions optimized for heavy storefront and administrative interactions.
+* **Nested Categories:** Supports unlimited category levels using a parent-child category structure.
+* **Product Variants:** Products can have multiple variants (e.g., Size, Color) with separate SKU, price adjustment, and inventory.
+* **Inventory Management:** Supports both simple products and variant-based products with stock tracking.
+* **Search & Filtering:** Category, search, sorting, and pagination are synchronized with URL parameters, allowing users to refresh or share filtered pages without losing state.
+* **Guest Checkout:** Customers can place orders without creating an account.
+* **State Management & Caching:** Uses Zustand for UI state and TanStack Query for server-state caching and automatic data refetching.
+* **Responsive Design:** Fully responsive interface for desktop, tablet, and mobile devices.
 
 ---
 
-### ⚙️ Core Engineering Architecture (Deep-Dive)
+## ⚙️ Technical Highlights
 
-#### 1. Advanced Structural UPSERT Loops & Referential Integrity Guards
-Managing complex product schemas across highly coupled structural tables requires zero-fault isolation layers to defend financial and physical tracking records:
-* **The Business Dilemma:** Deleting products or changing variants associated with historical customer transactions destroys backend consistency, breaking active client invoices, metrics calculations, and tracking history.
-* **The Strategy:** Outfitted with an active lookup interceptor targeting `order_items` inside the relational system. Any batch update (`handleSyncProductVariants`) or strict deletion (`handleDeleteProduct`) that flags active target identifiers throws a `409 Conflict` boundary, safeguarding transactional structures before cascading actions.
+### 1.Product & Variant Protection
+Products and variants that are already used in customer orders cannot be removed accidentally.
 
-#### 2. ACID-Compliant Transactional Order Orchestration Engine
-Securing financial checkout actions against dirty reads, half-written data payloads, and structural mutations utilizes a strict database routing setup:
-* **Relational Payload Isolation:** Wraps individual entry pipelines (`handleCreateOrder`) securely within explicit connection clients from the PostgreSQL pool using native `BEGIN`, `COMMIT`, and `ROLLBACK` boundaries. If main catalog registration steps (`orders`) or deep structural loops (`order_items`) experience failure, the database engine executes an immediate snapshot rollback.
-* **Non-Blocking Promise Aggregation:** Bypasses sequential execution bottlenecks inside iteration blocks by using asynchronous `Promise.all()` structures. The system dispatches multiple child-row operations simultaneously to the multi-threaded query compiler, minimizing network database roundtrips.
+Before deleting or updating product variants, the system checks related order records and prevents operations that would break historical order data.
 
-#### 3. High-Concurrency Stock Race-Condition & Deduction Defenses
-Multi-user product updates present major consistency challenges when multiple requests attempt to claim identical limited stock metrics concurrently:
-* **Inline State Atomic Constraints:** Eradicates race-conditions at the query level during order completion steps (`handleUpdateOrder`). The stock modifier forces atomic processing parameters directly inside the core mutation block, executing: `UPDATE inventory SET quantity = quantity - $1 WHERE product_variant_id = $2 AND quantity >= $1;`
-* **Boundary Validation & Rollbacks:** Employs precise row-count evaluations (`result.rowCount === 0`) right after bulk updates run. If a query finds a variant doesn't exist or flags insufficient stock, the system breaks out of execution and throws a `400 Bad Request` state error. This cancels downstream operations, like incrementing `sold_count`, and triggers a full database rollback.
+### 2.Database Transactions
+Order creation is wrapped inside PostgreSQL transactions using:
 
-#### 4. Hardware-Native Media CSS Print Engine for Administrative Invoicing
-Delivers clean administrative order reports directly inside customer-facing components without requiring expensive client-side PDF compilers or external rendering dependencies:
-* **Media-Query Print Interception:** Employs structural utility layers using Tailwind's hardware-native `hidden print:block` layout boundaries. The UI dynamically isolates administrative components entirely from standard viewport screens while auto-formatting high-fidelity invoices (`InvoicePrint`) for real-world document processing or structural system-native OS print views.
-* **Dynamic Relational Reconstruction:** Maps historical raw payment values, nested sub-item matrix variants, string-interpolated Mono-SKUs (`final_sku`), and granular shipping/subtotal pricing parameters into structured tables, preventing design alignment breaking across active print layouts.
+```sql
+BEGIN
+COMMIT
+ROLLBACK
+```
+If any step fails during checkout, all database changes are reverted to keep data consistent.
 
-#### 5. Cross-Cloud Distributed Assets & Post-Fail Storage Reclamation
-Handling hybrid binary form payloads alongside database record modification poses serious challenges, as failed operations often leave orphan files consuming cloud storage:
-* **Parallel Execution Engine:** Employs multi-stream multipart processing, uploading main covers and sub-image collection arrays concurrently via native `Promise.all()` structures directly onto Cloudinary targets without locking backend execution threads.
-* **Storage Garbage Collector:** To solve database-abort discrepancies, the interceptor registers newly committed file tracks inside an active tracking array. If an entity validation or database constraint breaks after images reach cloud storage, the application captures the exception and dispatches automated asynchronous `cloudinaryFileDelete` threads, cleaning orphan assets instantly.
+### 3.Stock Validation & Race Condition Protection
+Inventory updates use atomic SQL queries:
+```sql
+UPDATE inventory
+SET quantity = quantity - $1
+WHERE product_variant_id = $2
+AND quantity >= $1;
+```
+This prevents overselling products when multiple customers place orders at the same time.
 
-#### 6. Automated Algorithmic SKU & Collision-Free SEO Slug Pipelines
-Bypasses manual metadata administration by computing strict, structured identifiers directly inside the request controller layers:
-* **Deterministic SKU Compiling:** Combines primary corporate product codes with string mutations and auto-generated variants. For multi-attribute items, it safely maps values into standard child expressions (e.g., `TSH-A97B-RED-XL`), while defaulting to structured root lines for flat items.
-* **Collision-Free Slugs:** Utilizes strict regex sanitization patterns coupled with trailing Unix timestamp microstamps (`Date.now().toString().slice(-5)`). This guarantees human-readable, SEO-optimized product routing while eliminating primary key duplication risks.
+If stock is unavailable, the transaction is cancelled automatically.
 
-#### 7. Stateless Search Parameter Filtering & Dynamic Boundary Reset Matrix
-Decouples complex filtering interfaces from traditional, volatile local React states by adopting a strict URL-driven data pipeline:
-* **Automated Pagination Reset:** Implements an automated boundary guard within the navigation interceptor (`handleUpdateFilter`). Whenever a user registers a new category filter, sorting matrix, or search query, the pipeline automatically forces a hard-reset of the pagination tracker back to page 1. This prevents "Out of Bounds" rendering errors and ensures users never land on orphaned empty pages.
-* **Composite Dynamic Pricing Engine:** Computes real-time production-level customer pricing on the frontend by dynamically parsing relational database parameters. The compiler structurally sums base product fees (`base_price`) with specific lowest variant overrides (`min_price_modifier`), executing subsequent global percentage discount algorithms (`discount_percent`) seamlessly inside the grid layout without backend overhead.
+### 4.Invoice Printing
+Administrators can print clean order invoices directly from the browser using CSS print media rules.
 
-#### 8. Asynchronous FormData Pipelines & Multi-Query Invalidation Caching
-Maintains real-time administrative status synchronization across client interfaces by utilizing automated mutation tracking hooks:
-* **Multipart Hybrid Bundling:** Packs multi-file binary media nodes and complex JSON variant maps cleanly inside a single client-side `FormData` payload, routing heavy dataset streams through a secure, non-blocking network highway.
-* **Targeted Cache Bursting:** Binds operations to automated TanStack Query `useMutation` endpoints. On tracking successful response signatures, the cache invalidator triggers automated query register purges across `['orders']`, `['products']`, and single core keys (`['order', id]`), delivering synchronized interface transitions without requiring full page refetches.
+No external PDF generation library is required.
 
-#### 9. Fluid Staggered Micro-Animations & Layout Performance
-Optimizes client-side UI thread execution while loading high-density administrative and customer-facing catalogs:
-* **Staggered Layout Injection:** Utilizes Tailwind CSS entry frames coupled with index-based inline calculation offsets (`animationDelay: index * 50ms`). This enforces a smooth, progressive loading order across dynamic item rows, significantly reducing peak processing spikes on the browser’s render thread and establishing a polished UX standard.
+### 5.Cloudinary Image Management
+Product images are uploaded to Cloudinary.
+
+If a database operation fails after uploading images, the application automatically removes unused files to prevent orphan storage.
+
+### 6.Automatic SKU & Slug Generation
+The system automatically generates:
+
+* **Unique product SKUs**
+* **Variant SKUs**
+* **SEO-friendly slugs**
+
+This reduces manual data entry and avoids duplicate identifiers.
+
+### 7.URL-Based Filtering
+Search, sorting, category filtering, and pagination are controlled through URL query parameters.
+
+Pagination automatically resets when filters change, preventing invalid page states.
+
+### 8.File Upload Handling
+Complex product data and multiple images are submitted together using FormData, allowing products and media to be processed in a single request.
+
+### 9.Cache Synchronization
+TanStack Query automatically refreshes affected data after create, update, or delete operations.
+
+This keeps the admin dashboard and storefront synchronized without requiring manual page refreshes.
 
 ---
 
